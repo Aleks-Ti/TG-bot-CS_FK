@@ -46,7 +46,7 @@ Install dependencies from the file requirements.txt:
 pip install -r requirements.txt
 ```
 
-## Перед запуском
+## Before launching
 
 ```bash
 cd projectС/
