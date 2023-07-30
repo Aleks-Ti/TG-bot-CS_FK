@@ -72,6 +72,7 @@ class GameCon:
         SECRETS_NUM_GAME: Рандомное число от 0 до 100.
         COUNT_GAME: Счетчик попыток одной сессии.
     """
+
     SECRETS_NUM_GAME: int
     COUNT_GAME = 0
 
@@ -144,6 +145,13 @@ async def game_number(message: types.Message):
     )
 
 
+def sticker_message(id, sticker):
+    bot.send_sticker(
+        chat_id=id,
+        sticker=choice(sticker),
+    )
+
+
 @dp.message_handler(state=GamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
     """Отправка сообщения c результатом игры."""
@@ -156,31 +164,31 @@ async def guess_number(message: types.Message, state: FSMContext):
     while True:
         GameCon.COUNT_GAME += 1
         if 0 > value or value > 100:
-            await bot.send_sticker(
-                chat_id=chat_id,
-                sticker=choice(not_sticker),
-            )
+            await sticker_message(chat_id, not_sticker)
             await state.update_data(value=value)
             break
-        if value > secret:
-            await bot.send_sticker(
+        if GameCon.COUNT_GAME == 100:
+            await state.finish()
+            await bot.send_message(
                 chat_id=chat_id,
-                sticker=choice(hot_sticker),
+                text='##########'
+                '### 100 попыток это максимум!\n'
+                '### Число не найдено.\n'
+                '### В следующий раз получиться!\n'
+                '### Игра окончена.\n'
+                '###########',
             )
+            break
+        if value > secret:
+            await sticker_message(chat_id, hot_sticker)
             await state.update_data(value=value)
             break
         elif value < secret:
-            await bot.send_sticker(
-                chat_id=chat_id,
-                sticker=choice(cold_sticker),
-            )
+            await sticker_message(chat_id, cold_sticker)
             await state.update_data(value=value)
             break
         else:
-            await bot.send_sticker(
-                chat_id=chat_id,
-                sticker=choice(win_sticker),
-            )
+            await sticker_message(chat_id, win_sticker)
             await state.finish()
             await asin.sleep(2)
             await bot.send_message(
@@ -188,11 +196,14 @@ async def guess_number(message: types.Message, state: FSMContext):
                 text='#######🎉🎉🎉\n'
                 '### УРААА!!!\n### ПОБЕДА!\n'
                 '### У тебя получилось угадать'
-                ' за ' + str(GameCon.COUNT_GAME) + ' '
-                + word_declension(GameCon.COUNT_GAME) + '\n'
+                ' за '
+                + str(GameCon.COUNT_GAME)
+                + ' '
+                + word_declension(GameCon.COUNT_GAME)
+                + '\n'
                 '### 🎊 Внушительный результат!!!\n'
                 '### Игра окончена! \n'
-                '########🎉🎉🎉',
+                '########🎉🎉',
             )
             break
 
@@ -252,15 +263,16 @@ async def send_welcome(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_1 = types.KeyboardButton(text='/byte')
     button_2 = types.KeyboardButton(text='/transcript')
-    button_3 = types.KeyboardButton(text='/numbers_game')
+    # button_3 = types.KeyboardButton(text='/numbers_game')
     keyboard.add(button_1, button_2, button_3)
 
     await message.reply(
         'Привет!\nХочешь увидеть, как выглядит любой символ, '
         'или мб твоё имя в байтовом представлении?! - жми -> /byte\n'
         'Если нужно конвертировать машинный код в слова или буквы, '
-        'то жми -> /transcript'
-        '\nИли нажми кнопки внизу 👇👇👇',
+        'то жми -> /transcript\n'
+        'А может сыграем в игру Угадай число? - жми -> /numbers_game\n'
+        'Или нажми кнопки внизу 👇👇👇',
         reply_markup=keyboard,
     )
 
