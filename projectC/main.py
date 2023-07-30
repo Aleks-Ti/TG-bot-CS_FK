@@ -6,8 +6,16 @@ from aiogram import Bot, Dispatcher, executor, types
 from dotenv import load_dotenv
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from bitarray import bitarray
-from stiker import STIKER_ANGRY_HACKER, STIKER_FANNY_HACKER
+from stiker import (
+    STICKER_ANGRY_HACKER,
+    STICKER_FANNY_HACKER,
+    not_sticker,
+    hot_sticker,
+    cold_sticker,
+    win_sticker,
+)
 import asyncio as asin
+from random import randint, choice
 
 load_dotenv()
 
@@ -25,7 +33,6 @@ TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 
 RETRY_PERIOD = 10  # Период обращения
 
-
 storage = MemoryStorage()
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher(bot, storage=storage)
@@ -34,7 +41,7 @@ dp = Dispatcher(bot, storage=storage)
 class ByteState(StatesGroup):
     """Машина состояния.
 
-    Сохранение пользовательского ввода для конвертации в байт код.
+    Ожидание пользовательского ввода для конвертации в байт код.
     """
 
     name = State()
@@ -43,10 +50,39 @@ class ByteState(StatesGroup):
 class ConvertState(StatesGroup):
     """Машина состояния.
 
-    Сохранение пользовательского ввода для конвертации байт кода в utf-8.
+    Ожидание пользовательского ввода для конвертации байт кода в utf-8.
     """
 
     name = State()
+
+
+class GamesState(StatesGroup):
+    """Машина состояния.
+
+    Ожидание пользовательского ввода guess game.
+    """
+
+    name = State()
+
+
+class GameCon:
+    """Game conditions.
+
+    Attributes:
+        SECRETS_NUM_GAME: Рандомное число от 0 до 100.
+        COUNT_GAME: Счетчик попыток одной сессии.
+    """
+    SECRETS_NUM_GAME: int
+    COUNT_GAME = 0
+
+
+def word_declension(count: int) -> str:
+    if count <= 1:
+        return 'попытку'
+    elif count > 1 and count < 5:
+        return 'попытки'
+    else:
+        return 'попыток'
 
 
 def convert_byte(words: str) -> bytes:
@@ -86,6 +122,81 @@ async def transcript(message: types.Message):
     await message.reply('Введите машинный код 📟 для дешифрации___ ')
 
 
+@dp.message_handler(commands=['numbers_game'])
+async def game_number(message: types.Message):
+    """Пользовательский ввод и состояние для игры."""
+    await GamesState.name.set()
+    GameCon.COUNT_GAME = 0
+    GameCon.SECRETS_NUM_GAME = randint(0, 100)
+    await message.reply(
+        '###########\n'
+        '### Угадай ЧИСЛО!\n'
+        '### Правила просты!\n'
+        '#### Число может быть от 0 до 100.\n'
+        '### Если введешь не число,\n'
+        '#### оно конвертируется в число из таблицы utf-8\n'
+        '##### и ты ошибешься! 😝\n'
+        '### Если число больше, то я подскажу - горячо,\n'
+        '#### если меньше - холодно\n'
+        '##### а если вне диапазона?! ...\n'
+        '### Вперед друг, к победе!!!\n'
+        '###########'
+    )
+
+
+@dp.message_handler(state=GamesState.name)
+async def guess_number(message: types.Message, state: FSMContext):
+    """Отправка сообщения c результатом игры."""
+    secret = GameCon.SECRETS_NUM_GAME
+    chat_id = message.from_user.id
+    try:
+        value = int(message.text)
+    except ValueError:
+        value = ord(message.text[0])
+    while True:
+        GameCon.COUNT_GAME += 1
+        if 0 > value or value > 100:
+            await bot.send_sticker(
+                chat_id=chat_id,
+                sticker=choice(not_sticker),
+            )
+            await state.update_data(value=value)
+            break
+        if value > secret:
+            await bot.send_sticker(
+                chat_id=chat_id,
+                sticker=choice(hot_sticker),
+            )
+            await state.update_data(value=value)
+            break
+        elif value < secret:
+            await bot.send_sticker(
+                chat_id=chat_id,
+                sticker=choice(cold_sticker),
+            )
+            await state.update_data(value=value)
+            break
+        else:
+            await bot.send_sticker(
+                chat_id=chat_id,
+                sticker=choice(win_sticker),
+            )
+            await state.finish()
+            await asin.sleep(2)
+            await bot.send_message(
+                chat_id=chat_id,
+                text='#######🎉🎉🎉\n'
+                '### УРААА!!!\n### ПОБЕДА!\n'
+                '### У тебя получилось угадать'
+                ' за ' + str(GameCon.COUNT_GAME) + ' '
+                + word_declension(GameCon.COUNT_GAME) + '\n'
+                '### 🎊 Внушительный результат!!!\n'
+                '### Игра окончена! \n'
+                '########🎉🎉🎉',
+            )
+            break
+
+
 @dp.message_handler(state=ConvertState.name)
 async def process_transcript(message: types.Message, state: FSMContext):
     """Отправка сообщения с данными конвертации байт кода в utf-8"""
@@ -100,7 +211,7 @@ async def process_transcript(message: types.Message, state: FSMContext):
     await asin.sleep(3.5)
     await bot.send_sticker(
         chat_id=chat_id,
-        sticker=STIKER_ANGRY_HACKER,
+        sticker=STICKER_ANGRY_HACKER,
     )
     await asin.sleep(3)
     await bot.send_message(chat_id=chat_id, text='Получение данных ⚙️⚙️⚙️')
@@ -125,7 +236,7 @@ async def process_name(message: types.Message, state: FSMContext):
     await asin.sleep(3)
     await bot.send_sticker(
         chat_id=chat_id,
-        sticker=STIKER_FANNY_HACKER,
+        sticker=STICKER_FANNY_HACKER,
     )
     await asin.sleep(3)
     await bot.send_message(chat_id=chat_id, text='Получение данных ⚙️⚙️⚙️')
@@ -141,7 +252,8 @@ async def send_welcome(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_1 = types.KeyboardButton(text='/byte')
     button_2 = types.KeyboardButton(text='/transcript')
-    keyboard.add(button_1, button_2)
+    button_3 = types.KeyboardButton(text='/numbers_game')
+    keyboard.add(button_1, button_2, button_3)
 
     await message.reply(
         'Привет!\nХочешь увидеть, как выглядит любой символ, '
