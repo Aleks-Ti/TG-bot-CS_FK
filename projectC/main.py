@@ -1,3 +1,4 @@
+import sys
 import logging
 import os
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -145,8 +146,8 @@ async def game_number(message: types.Message):
     )
 
 
-def sticker_message(id, sticker):
-    bot.send_sticker(
+async def sticker_message(id, sticker):
+    await bot.send_sticker(
         chat_id=id,
         sticker=choice(sticker),
     )
@@ -263,7 +264,7 @@ async def send_welcome(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_1 = types.KeyboardButton(text='/byte')
     button_2 = types.KeyboardButton(text='/transcript')
-    # button_3 = types.KeyboardButton(text='/numbers_game')
+    button_3 = types.KeyboardButton(text='/numbers_game')
     keyboard.add(button_1, button_2, button_3)
 
     await message.reply(
