@@ -127,23 +127,26 @@ async def transcript(message: types.Message):
 @dp.message_handler(commands=['numbers_game'])
 async def game_number(message: types.Message):
     """Пользовательский ввод и состояние для игры."""
-    await GamesState.name.set()
-    GameCon.COUNT_GAME = 0
-    GameCon.SECRETS_NUM_GAME = randint(0, 100)
-    await message.reply(
-        '###########\n'
-        '### Угадай ЧИСЛО!\n'
-        '### Правила просты!\n'
-        '#### Число может быть от 0 до 100.\n'
-        '### Если введешь не число,\n'
-        '#### оно конвертируется в число из таблицы utf-8\n'
-        '##### и ты ошибешься! 😝\n'
-        '### Если число больше, то я подскажу - горячо,\n'
-        '#### если меньше - холодно\n'
-        '##### а если вне диапазона?! ...\n'
-        '### Вперед друг, к победе!!!\n'
-        '###########'
-    )
+    try:
+        await GamesState.name.set()
+        GameCon.COUNT_GAME = 0
+        GameCon.SECRETS_NUM_GAME = randint(0, 100)
+        await message.reply(
+            '###########\n'
+            '### Угадай ЧИСЛО!\n'
+            '### Правила просты!\n'
+            '#### Число может быть от 0 до 100.\n'
+            '### Если введешь не число,\n'
+            '#### оно конвертируется в число из таблицы utf-8\n'
+            '##### и ты ошибешься! 😝\n'
+            '### Если число больше, то я подскажу - горячо,\n'
+            '#### если меньше - холодно\n'
+            '##### а если вне диапазона?! ...\n'
+            '### Вперед друг, к победе!!!\n'
+            '###########'
+        )
+    except BaseException as err:
+        logging.error(f'bug games: {err}')
 
 
 async def sticker_message(id, sticker):
@@ -156,58 +159,60 @@ async def sticker_message(id, sticker):
 @dp.message_handler(state=GamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
     """Отправка сообщения c результатом игры."""
-    secret = GameCon.SECRETS_NUM_GAME
-    chat_id = message.from_user.id
     try:
-        value = int(message.text)
-    except ValueError:
-        value = ord(message.text[0])
-    while True:
-        GameCon.COUNT_GAME += 1
-        if 0 > value or value > 100:
-            await sticker_message(chat_id, not_sticker)
-            await state.update_data(value=value)
-            break
-        if GameCon.COUNT_GAME == 100:
-            await state.finish()
-            await bot.send_message(
-                chat_id=chat_id,
-                text='##########'
-                '### 100 попыток это максимум!\n'
-                '### Число не найдено.\n'
-                '### В следующий раз получиться!\n'
-                '### Игра окончена.\n'
-                '###########',
-            )
-            break
-        if value > secret:
-            await sticker_message(chat_id, hot_sticker)
-            await state.update_data(value=value)
-            break
-        elif value < secret:
-            await sticker_message(chat_id, cold_sticker)
-            await state.update_data(value=value)
-            break
-        else:
-            await sticker_message(chat_id, win_sticker)
-            await state.finish()
-            await asin.sleep(2)
-            await bot.send_message(
-                chat_id=chat_id,
-                text='#######🎉🎉🎉\n'
-                '### УРААА!!!\n### ПОБЕДА!\n'
-                '### У тебя получилось угадать'
-                ' за '
-                + str(GameCon.COUNT_GAME)
-                + ' '
-                + word_declension(GameCon.COUNT_GAME)
-                + '\n'
-                '### 🎊 Внушительный результат!!!\n'
-                '### Игра окончена! \n'
-                '########🎉🎉',
-            )
-            break
-
+        secret = GameCon.SECRETS_NUM_GAME
+        chat_id = message.from_user.id
+        try:
+            value = int(message.text)
+        except ValueError:
+            value = ord(message.text[0])
+        while True:
+            GameCon.COUNT_GAME += 1
+            if 0 > value or value > 100:
+                await sticker_message(chat_id, not_sticker)
+                await state.update_data(value=value)
+                break
+            if GameCon.COUNT_GAME == 100:
+                await state.finish()
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text='##########'
+                    '### 100 попыток это максимум!\n'
+                    '### Число не найдено.\n'
+                    '### В следующий раз получиться!\n'
+                    '### Игра окончена.\n'
+                    '###########',
+                )
+                break
+            if value > secret:
+                await sticker_message(chat_id, hot_sticker)
+                await state.update_data(value=value)
+                break
+            elif value < secret:
+                await sticker_message(chat_id, cold_sticker)
+                await state.update_data(value=value)
+                break
+            else:
+                await sticker_message(chat_id, win_sticker)
+                await state.finish()
+                await asin.sleep(2)
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text='#######🎉🎉🎉\n'
+                    '### УРААА!!!\n### ПОБЕДА!\n'
+                    '### У тебя получилось угадать'
+                    ' за '
+                    + str(GameCon.COUNT_GAME)
+                    + ' '
+                    + word_declension(GameCon.COUNT_GAME)
+                    + '\n'
+                    '### 🎊 Внушительный результат!!!\n'
+                    '### Игра окончена! \n'
+                    '########🎉🎉',
+                )
+                break
+    except BaseException as err:
+        logging.error(f'asD {err}')
 
 @dp.message_handler(state=ConvertState.name)
 async def process_transcript(message: types.Message, state: FSMContext):
@@ -279,4 +284,8 @@ async def send_welcome(message: types.Message):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    try:
+        executor.start_polling(dp, skip_updates=True)
+    except BaseException as err:
+        logging.info(f'отлов бага: {err}')
+        print(err)

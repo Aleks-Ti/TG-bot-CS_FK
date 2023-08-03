@@ -22,6 +22,8 @@ Detailed instructions on installation and configuration can be found below.
 
 ## Installation
 
+Python 3.10.5
+
 Clone the TG-bot-CS_FK repository to your local machine.
 
 ```bash
@@ -31,7 +33,7 @@ git clone https://github.com/Aleks-Ti/TG-bot-CS_FK.git
 Create and activate a virtual environment:
 
 ```bash
-python3 -m venv venv
+python3 -3.10 -m venv venv
 ```
 
 Activate virtual environment:
