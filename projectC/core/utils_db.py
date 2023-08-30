@@ -15,7 +15,7 @@ logging.basicConfig(
 
 DATABASE_URL = "sqlite:///database.db"
 engine = create_engine(
-    DATABASE_URL, echo=True
+    DATABASE_URL, echo=False
 )  # Параметр echo выводит SQL-запросы в консоль
 
 Session = sessionmaker(bind=engine)
@@ -28,12 +28,12 @@ def save_data_commit():
         session.commit()
     except Exception as err:
         session.rollback()
-        logging.ERROR(f'Ошибка создания юзера: {str(err)}')
+        logging.ERROR(f'Ошибка создания юзера: {err}')
         session.close()
 
 
 def create_user(data):
-    '''Создание профиля пользователя.'''
+    '''Создание профиля пользователя если нет в БД.'''
     user = data['from']
 
     user_exists = (

@@ -41,6 +41,7 @@ class ByteState(StatesGroup):
     """
 
     name = State()
+    cancel = State()
 
 
 class ConvertState(StatesGroup):
@@ -71,6 +72,18 @@ class GameCon:
 
     SECRETS_NUM_GAME: int
     COUNT_GAME = 0
+
+
+@dp.message_handler(commands=['cancel'], state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    """Обработчик команды отмены."""
+    current_state = await state.get_state()
+    if current_state is not None:
+        logging.info('Cancelling state %r', current_state)
+        await state.finish()
+        await message.answer('Операция отменена. Вернулся в начальное состояние.')
+    else:
+        await message.answer('Нет активных операций для отмены.')
 
 
 def word_declension(count: int) -> str:
@@ -189,6 +202,7 @@ async def guess_number(message: types.Message, state: FSMContext):
             await state.finish()
             await asin.sleep(1.5)
             count_game = GameCon.COUNT_GAME
+            create_user(message)
             game_data_update_users_profile(message, count_game)
             await bot.send_message(
                 chat_id=chat_id,
@@ -260,10 +274,10 @@ async def profile_user(message: types.Message):
     await bot.send_message(chat_id=message['from']['id'], text=get_user)
 
 
-@dp.message_handler(commands=['*'])
+@dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     """
-     Вызывается в случаем получения команды `/*`
+    Вызывается в случаем получения команды `/start`
 
     methods:
         create_user - создания юзера и занесения в базу данных.
@@ -276,7 +290,8 @@ async def send_welcome(message: types.Message):
     button_2 = types.KeyboardButton(text='/transcript')
     button_3 = types.KeyboardButton(text='/numbers_game')
     button_4 = types.KeyboardButton(text='/profile')
-    keyboard.add(button_1, button_2, button_3, button_4)
+    button_5 = types.KeyboardButton(text='/cancel')
+    keyboard.add(button_1, button_2, button_3, button_4, button_5)
 
     await message.reply(
         'Привет!\nХочешь увидеть, как выглядит любой символ, '
