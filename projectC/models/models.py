@@ -8,7 +8,8 @@ engine = create_engine(DATABASE_URL, echo=False)  # Параметр echo выв
 
 Base = declarative_base()
 
-'''LДля создания таблицы в БД. Выделите весь код в этом файле, нажать шифт + ентер в vs code.
+'''Для создания таблицы в БД. Выделите весь код в этом файле,
+    нажать шифт + ентер в vs code.
 В режиме командной строки python, ввести команду -> Base.metadata.create_all(engine)
 '''
 

@@ -64,10 +64,21 @@ TOKEN = "your TG token of the channel bot"
 CHAT_ID = 0123456789  # your personal ID (optionally)
 ```
 
-### Start
+## Start
+
+### Create model in db
 
 ```bash
-cd projectС/
+cd models/
+```
+Highlight all the code in the **models.py** file and press **shift + enter** in VScode to load the data for the Python command line, or invoke the Python terminal and manually write the data imorts in the models.py file to create a table in the database via the command:
+
+```Base.metadata.create_all(engine)```
+
+Now, the table for users is created, you can start the project.
+
+```bash
+cd ../projectС/
 ```
 
 ```bash
