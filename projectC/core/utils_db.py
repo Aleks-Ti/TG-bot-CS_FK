@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import logging
 import os
 from aiogram import types
-
+from core.utils import word_declension
 
 logging.basicConfig(
     format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s',
@@ -83,9 +83,11 @@ def get_profile_users(data_user: dict):
     '''Получение профиля пользователя.'''
     user = data_user['from']
     user_profile = session.query(User).filter_by(user_id=user['id']).first()
+    best_result = user_profile.best_result
     return (
         f'Хэй {user_profile.first_name}! 👋\n'
-        f'Твой лучший результат в игре: {user_profile.best_result} 🎊\n'
+        f'Твой лучший результат в игре:\n'
+        f'     - угадано за {best_result} {word_declension(best_result)} 🎊\n'
         f'🧮 Сыграно: {user_profile.total_number_games} игр\n'
         f'Ты с нами уже: {user_profile.registered_at} 🕰'
     )

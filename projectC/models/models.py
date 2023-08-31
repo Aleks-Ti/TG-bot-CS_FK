@@ -6,15 +6,11 @@ from datetime import datetime
 DATABASE_URL = "sqlite:///database.db"
 engine = create_engine(DATABASE_URL, echo=False)  # Параметр echo выводит SQL-запросы в консоль
 
-Session = sessionmaker(bind=engine)
-session = Session()
+Base = declarative_base()
 
-'''Создать таблицу если нужно. То раскоментить код выше,
-выделить весь код в этом файле, нажать шифт + ентер в vs code.
+'''LДля создания таблицы в БД. Выделите весь код в этом файле, нажать шифт + ентер в vs code.
 В режиме командной строки python, ввести команду -> Base.metadata.create_all(engine)
 '''
-
-Base = declarative_base()
 
 
 class User(Base):

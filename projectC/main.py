@@ -9,10 +9,10 @@ from bitarray import bitarray
 from stiker import (
     STICKER_ANGRY_HACKER,
     STICKER_FANNY_HACKER,
-    not_sticker,
-    hot_sticker,
-    cold_sticker,
-    win_sticker,
+    HOT_STICKER_LIST,
+    NOT_STICKER_LIST,
+    COLD_STICKER_LIST,
+    WIN_STICKER_LIST,
 )
 import asyncio as asin
 from random import randint, choice
@@ -21,6 +21,7 @@ from core.utils_db import (
     game_data_update_users_profile,
     get_profile_users,
 )
+from core.utils import word_declension
 
 load_dotenv()
 
@@ -51,6 +52,7 @@ class ConvertState(StatesGroup):
     """
 
     name = State()
+    cancel = State()
 
 
 class GamesState(StatesGroup):
@@ -60,18 +62,18 @@ class GamesState(StatesGroup):
     """
 
     name = State()
+    cancel = State()
 
 
 class GameCon:
     """Game conditions.
 
     Attributes:
-        SECRETS_NUM_GAME: Рандомное число от 0 до 100.
-        COUNT_GAME: Счетчик попыток одной сессии.
+        SECRETS_NUM_GAME: {user_id: Рандомное число от 0 до 100}.
+        COUNT_ATTEMPTS: {user_id: Счетчик попыток одной игровой сессии}.
     """
-
-    SECRETS_NUM_GAME: int
-    COUNT_GAME = 0
+    SECRETS_NUM_GAME = {}
+    COUNT_ATTEMPTS = {}
 
 
 @dp.message_handler(commands=['cancel'], state='*')
@@ -81,19 +83,9 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     if current_state is not None:
         logging.info('Cancelling state %r', current_state)
         await state.finish()
-        await message.answer('Операция отменена. Вернулся в начальное состояние.')
+        await message.answer('Операция отменена.')
     else:
         await message.answer('Нет активных операций для отмены.')
-
-
-def word_declension(count: int) -> str:
-    '''Определяет склонение слова относительно числа.'''
-    if count <= 1:
-        return 'попытку'
-    elif count > 1 and count < 5:
-        return 'попытки'
-    else:
-        return 'попыток'
 
 
 def convert_byte(words: str) -> bytes:
@@ -123,8 +115,6 @@ async def byte_message(message: types.Message):
         'его в машинное представление 🦾'
     )
 
-    # await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=text)
-
 
 @dp.message_handler(commands=['transcript'])
 async def transcript(message: types.Message):
@@ -133,12 +123,16 @@ async def transcript(message: types.Message):
     await message.reply('Введите машинный код 📟 для дешифрации___ ')
 
 
+
+
 @dp.message_handler(commands=['numbers_game'])
 async def game_number(message: types.Message):
     """Пользовательский ввод и состояние для игры."""
     await GamesState.name.set()
-    GameCon.COUNT_GAME = 0
-    GameCon.SECRETS_NUM_GAME = randint(0, 100)
+    identifier_user = message['from']['id']
+    secret = randint(0, 100)
+    GameCon.COUNT_ATTEMPTS[identifier_user] = 0
+    GameCon.SECRETS_NUM_GAME[identifier_user] = secret
     await message.reply(
         '###########\n'
         '### Угадай ЧИСЛО!\n'
@@ -156,6 +150,7 @@ async def game_number(message: types.Message):
 
 
 async def sticker_message(id, sticker):
+    """Возвращает рандомный стикер из списка."""
     await bot.send_sticker(
         chat_id=id,
         sticker=choice(sticker),
@@ -165,19 +160,19 @@ async def sticker_message(id, sticker):
 @dp.message_handler(state=GamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
     """Отправка сообщения c результатом игры."""
-    secret = GameCon.SECRETS_NUM_GAME
     chat_id = message.from_user.id
+    secret = GameCon.SECRETS_NUM_GAME[chat_id]
     try:
         value = int(message.text)
     except ValueError:
         value = ord(message.text[0])
     while True:
-        GameCon.COUNT_GAME += 1
+        GameCon.COUNT_ATTEMPTS[chat_id] += 1
         if 0 > value or value > 100:
-            await sticker_message(chat_id, not_sticker)
+            await sticker_message(chat_id, NOT_STICKER_LIST)
             await state.update_data(value=value)
             break
-        if GameCon.COUNT_GAME == 100:
+        if GameCon.COUNT_ATTEMPTS[chat_id] == 100:
             await state.finish()
             await bot.send_message(
                 chat_id=chat_id,
@@ -190,29 +185,30 @@ async def guess_number(message: types.Message, state: FSMContext):
             )
             break
         if value > secret:
-            await sticker_message(chat_id, hot_sticker)
+            await sticker_message(chat_id, HOT_STICKER_LIST)
             await state.update_data(value=value)
             break
         elif value < secret:
-            await sticker_message(chat_id, cold_sticker)
+            await sticker_message(chat_id, COLD_STICKER_LIST)
             await state.update_data(value=value)
             break
         else:
-            await sticker_message(chat_id, win_sticker)
+            await sticker_message(chat_id, WIN_STICKER_LIST)
             await state.finish()
             await asin.sleep(1.5)
-            count_game = GameCon.COUNT_GAME
+            count_attempts = GameCon.COUNT_ATTEMPTS.pop(chat_id)
+            del GameCon.SECRETS_NUM_GAME[chat_id]
             create_user(message)
-            game_data_update_users_profile(message, count_game)
+            game_data_update_users_profile(message, count_attempts)
             await bot.send_message(
                 chat_id=chat_id,
                 text='#######🎉🎉🎉\n'
                 '### УРААА!!!\n### ПОБЕДА!\n'
                 '### У тебя получилось угадать'
                 ' за '
-                + str(count_game)
+                + str(count_attempts)
                 + ' '
-                + word_declension(count_game)
+                + word_declension(count_attempts)
                 + '\n'
                 '### 🎊 Внушительный результат!!!\n'
                 '### Игра окончена! \n'
@@ -232,14 +228,14 @@ async def process_transcript(message: types.Message, state: FSMContext):
         chat_id=chat_id,
         text='Лучшие ученые мира принялись за расшифровку! 🧮🧮🧮',
     )
-    await asin.sleep(3.5)
+    await asin.sleep(2)
     await bot.send_sticker(
         chat_id=chat_id,
         sticker=STICKER_ANGRY_HACKER,
     )
-    await asin.sleep(3)
+    await asin.sleep(2)
     await bot.send_message(chat_id=chat_id, text='Получение данных ⚙️⚙️⚙️')
-    await asin.sleep(3)
+    await asin.sleep(2)
     await bot.send_message(
         chat_id=chat_id,
         text=f'Вернулся ответ. Читаем!\nРезультат'
@@ -257,14 +253,14 @@ async def process_name(message: types.Message, state: FSMContext):
         chat_id=chat_id,
         text='Происходит запрос 📡 на главные сервера планеты 📟📟📟',
     )
-    await asin.sleep(3)
+    await asin.sleep(2)
     await bot.send_sticker(
         chat_id=chat_id,
         sticker=STICKER_FANNY_HACKER,
     )
-    await asin.sleep(3)
+    await asin.sleep(2)
     await bot.send_message(chat_id=chat_id, text='Получение данных ⚙️⚙️⚙️')
-    await asin.sleep(3)
+    await asin.sleep(2)
     await bot.send_message(chat_id=chat_id, text=messages)
 
 
@@ -286,7 +282,7 @@ async def send_welcome(message: types.Message):
     create_user(message)
 
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_1 = types.KeyboardButton(text='/byte')
+    button_1 = types.KeyboardButton(text='/byte', callback_data='/byte')
     button_2 = types.KeyboardButton(text='/transcript')
     button_3 = types.KeyboardButton(text='/numbers_game')
     button_4 = types.KeyboardButton(text='/profile')
