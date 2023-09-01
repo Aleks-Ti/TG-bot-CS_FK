@@ -126,7 +126,7 @@ async def transcript(message: types.Message):
     await message.reply('Введите машинный код 📟 для дешифрации___ ')
 
 
-@dp.message_handler(commands=['numbers_game'])
+@dp.message_handler(commands=['Game_guess_number'])
 async def game_number(message: types.Message):
     """Пользовательский ввод и состояние для игры."""
     await GamesState.name.set()
@@ -146,6 +146,7 @@ async def game_number(message: types.Message):
         '#### если же твое число меньше загаднного, то подскажу, '
         'что холодно.\n'
         '##### а если вне диапазона?! ...\n'
+        '### У тебя есть 30 попыток!\n'
         '### Вперед друг, к победе!!!\n'
         '###########'
     )
@@ -174,12 +175,12 @@ async def guess_number(message: types.Message, state: FSMContext):
             await sticker_message(chat_id, NOT_STICKER_LIST)
             await state.update_data(value=value)
             break
-        if GameCon.COUNT_ATTEMPTS[chat_id] == 100:
+        if GameCon.COUNT_ATTEMPTS[chat_id] >= 30:
             await state.finish()
             await bot.send_message(
                 chat_id=chat_id,
                 text='##########'
-                '### 100 попыток это максимум!\n'
+                '### 30 попыток это максимум!\n'
                 '### Число не найдено.\n'
                 '### В следующий раз получиться!\n'
                 '### Игра окончена.\n'
@@ -284,9 +285,9 @@ async def send_welcome(message: types.Message):
     create_user(message)
 
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_1 = types.KeyboardButton(text='/byte', callback_data='/byte')
+    button_1 = types.KeyboardButton(text='/byte')
     button_2 = types.KeyboardButton(text='/transcript')
-    button_3 = types.KeyboardButton(text='/numbers_game')
+    button_3 = types.KeyboardButton(text='/Game_guess_number')
     button_4 = types.KeyboardButton(text='/profile')
     button_5 = types.KeyboardButton(text='/cancel')
     keyboard.add(button_1, button_2, button_3, button_4, button_5)
@@ -297,7 +298,7 @@ async def send_welcome(message: types.Message):
         'Если нужно конвертировать машинный код в слова или буквы, '
         'то жми -> /transcript\n'
         'А может сыграем в игру Угадай число? - жми -> /numbers_game\n'
-        'Или нажми кнопки внизу 👇👇👇',
+        'Или жми кнопки внизу 👇👇👇',
         reply_markup=keyboard,
     )
 
