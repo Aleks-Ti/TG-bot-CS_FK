@@ -1,8 +1,7 @@
-from sqlalchemy import create_engine, Column, String, Integer, TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-# from sqlalchemy.orm import sessionmaker
 
+from sqlalchemy import TIMESTAMP, Column, Integer, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
 
 DATABASE_URL = "sqlite:///database.db"
 
@@ -10,6 +9,7 @@ DATABASE_URL = "sqlite:///database.db"
 engine = create_engine(DATABASE_URL, echo=False)
 Base = declarative_base()
 
+# from sqlalchemy.orm import sessionmaker
 # Session = sessionmaker(bind=engine)
 # session = Session()
 

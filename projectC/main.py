@@ -1,27 +1,29 @@
+import asyncio as asin
 import logging
 import os
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
+from random import choice, randint
+
 from aiogram import Bot, Dispatcher, executor, types
-from dotenv import load_dotenv
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from bitarray import bitarray
-from stiker import (
-    STICKER_ANGRY_HACKER,
-    STICKER_FANNY_HACKER,
-    HOT_STICKER_LIST,
-    NOT_STICKER_LIST,
-    COLD_STICKER_LIST,
-    WIN_STICKER_LIST,
-)
-import asyncio as asin
-from random import randint, choice
+from dotenv import load_dotenv
+
+from core.utils import word_declension
 from core.utils_db import (
     create_user,
     game_data_update_users_profile,
     get_profile_users,
 )
-from core.utils import word_declension
+from stiker import (
+    COLD_STICKER_LIST,
+    HOT_STICKER_LIST,
+    NOT_STICKER_LIST,
+    STICKER_ANGRY_HACKER,
+    STICKER_FANNY_HACKER,
+    WIN_STICKER_LIST,
+)
 
 load_dotenv()
 
@@ -72,6 +74,7 @@ class GameCon:
         SECRETS_NUM_GAME: {user_id: Рандомное число от 0 до 100}.
         COUNT_ATTEMPTS: {user_id: Счетчик попыток одной игровой сессии}.
     """
+
     SECRETS_NUM_GAME = {}
     COUNT_ATTEMPTS = {}
 
