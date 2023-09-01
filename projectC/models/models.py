@@ -1,16 +1,30 @@
 from sqlalchemy import create_engine, Column, String, Integer, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+# from sqlalchemy.orm import sessionmaker
+
 
 DATABASE_URL = "sqlite:///database.db"
-engine = create_engine(DATABASE_URL, echo=False)  # Параметр echo выводит SQL-запросы в консоль
 
+# Параметр echo выводит SQL-запросы в консоль если True
+engine = create_engine(DATABASE_URL, echo=False)
 Base = declarative_base()
 
-'''Для создания таблицы в БД. Выделите весь код в этом файле,
+# Session = sessionmaker(bind=engine)
+# session = Session()
+
+'''Для создания таблицы в БД. Раскомментить. Выделите весь код в этом файле,
     нажать шифт + ентер в vs code.
-В режиме командной строки python, ввести команду -> Base.metadata.create_all(engine)
+В режиме командной строки python, ввести команду:
+                                Base.metadata.create_all(engine)
+'''
+'''
+Для удаления например пользователя. Раскомментить. Выделите весь код в файле,
+    нажать шифт + ентер в vs code.
+В режиме командной строки python, ввести команду:
+        me = session.query(User).filter_by(id=нужный id)
+        me.delete()
+        session.commit()
 '''
 
 

@@ -50,6 +50,7 @@ def create_user(data):
 
         session.add(new_user)
         save_data_commit()
+    return new_user
 
 
 def game_data_update_users_profile(data_user: dict, value: int) -> None:
@@ -59,35 +60,50 @@ def game_data_update_users_profile(data_user: dict, value: int) -> None:
     )
     new_total = user_profile.total_number_games + 1
 
-    # if user_profile.best_result is None:
-    #     session.query(User).filter_by(user_id=data_user['from']['id']).update({'total_number_games': new_total, 'best_result': value})
-    #     save_data_commit()
-    #     return None
-    # if user_profile.best_result > value:
-    #     session.query(User).filter_by(user_id=data_user['from']['id']).update({'total_number_games': new_total, 'best_result': value})
-    #     save_data_commit()
-    #     return None
+    if user_profile.best_result is None:
+        session.query(User).filter_by(user_id=data_user['from']['id']).update(
+            {'total_number_games': new_total, 'best_result': value}
+        )
+        save_data_commit()
+        return None
+    if user_profile.best_result > value:
+        session.query(User).filter_by(user_id=data_user['from']['id']).update(
+            {'total_number_games': new_total, 'best_result': value}
+        )
+        save_data_commit()
+        return None
+
     session.query(User).filter_by(user_id=data_user['from']['id']).update(
-        {
-            'total_number_games': new_total,
-            'best_result': value
-            if user_profile.best_result is None
-            or user_profile.best_result > value
-            else user_profile.best_result,
-        }
+        {'total_number_games': new_total}
     )
     save_data_commit()
+
+
+def get_message_profile(instance: User, best_result=False):
+    if best_result:
+        return (
+            f'Хэй {instance.first_name}! 👋\n'
+            f'Твой лучший результат в игре:\n'
+            f' - угадано за {best_result} {word_declension(best_result)} 🎊\n'
+            f'🧮 Сыграно: {instance.total_number_games} игр\n'
+            f'Ты с нами уже: {instance.registered_at} 🕰'
+        )
+    return (
+        f'Хэй {instance.first_name}! 👋\n'
+        f'Твой лучший результат в игре:\n'
+        f'     - Вы, еще ни разу не играли - данные отсутствуют. 🎊\n'
+        f'🧮 Сыграно:  {instance.total_number_games} игр\n'
+        f'Зарегистрировался: {instance.registered_at} 🕰'
+    )
 
 
 def get_profile_users(data_user: dict):
     '''Получение профиля пользователя.'''
     user = data_user['from']
     user_profile = session.query(User).filter_by(user_id=user['id']).first()
+    if user_profile is None:
+        user_profile = create_user(data_user)
     best_result = user_profile.best_result
-    return (
-        f'Хэй {user_profile.first_name}! 👋\n'
-        f'Твой лучший результат в игре:\n'
-        f'     - угадано за {best_result} {word_declension(best_result)} 🎊\n'
-        f'🧮 Сыграно: {user_profile.total_number_games} игр\n'
-        f'Ты с нами уже: {user_profile.registered_at} 🕰'
-    )
+    if best_result is None:
+        return get_message_profile(user_profile)
+    return get_message_profile(user_profile, best_result)
