@@ -16,6 +16,13 @@ from core.utils_db import (
     game_data_update_users_profile,
     get_profile_users,
 )
+from settings import (
+    GAMES_GUESS_NUMBER,
+    ME_PROFILE,
+    CONVERT_WORD_IN_BINARY_CODE,
+    CONVERT_BIBARY_CODE_IN_WORD,
+    COMMANDS_FUNC,
+)
 from stiker import (
     COLD_STICKER_LIST,
     HOT_STICKER_LIST,
@@ -79,7 +86,7 @@ class GameCon:
     COUNT_ATTEMPTS = {}
 
 
-@dp.message_handler(commands=['cancel'], state='*')
+@dp.message_handler(commands=['Exit'], state='*')
 async def cancel_handler(message: types.Message, state: FSMContext):
     """Обработчик команды отмены."""
     current_state = await state.get_state()
@@ -115,7 +122,7 @@ async def byte_message(message: types.Message):
     await ByteState.name.set()
     await message.reply(
         'Введите ваше слово или имя, для конвертации '
-        'его в машинное представление 🦾'
+        'в двоичный код 🦾'
     )
 
 
@@ -123,10 +130,10 @@ async def byte_message(message: types.Message):
 async def transcript(message: types.Message):
     """Пользовательский ввод и состояние для дешифрации."""
     await ConvertState.name.set()
-    await message.reply('Введите машинный код 📟 для дешифрации___ ')
+    await message.reply('Введите двоичный код 📟 для дешифрации___ ')
 
 
-@dp.message_handler(commands=['Game_guess_number'])
+@dp.message_handler(commands=['game_guess_number'])
 async def game_number(message: types.Message):
     """Пользовательский ввод и состояние для игры."""
     await GamesState.name.set()
@@ -285,11 +292,11 @@ async def send_welcome(message: types.Message):
     create_user(message)
 
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_1 = types.KeyboardButton(text='/byte')
-    button_2 = types.KeyboardButton(text='/transcript')
-    button_3 = types.KeyboardButton(text='/Game_guess_number')
-    button_4 = types.KeyboardButton(text='/me_profile')
-    button_5 = types.KeyboardButton(text='/cancel')
+    button_1 = types.KeyboardButton(text=CONVERT_WORD_IN_BINARY_CODE)
+    button_2 = types.KeyboardButton(text=CONVERT_BIBARY_CODE_IN_WORD)
+    button_3 = types.KeyboardButton(text=GAMES_GUESS_NUMBER)
+    button_4 = types.KeyboardButton(text=ME_PROFILE)
+    button_5 = types.KeyboardButton(text='/Exit')
     keyboard.add(button_1, button_2, button_3, button_4, button_5)
 
     await message.reply(
@@ -301,6 +308,23 @@ async def send_welcome(message: types.Message):
         'Или жми кнопки внизу 👇👇👇',
         reply_markup=keyboard,
     )
+
+
+@dp.message_handler(
+    lambda message: message.text in COMMANDS_FUNC, content_types=['text']
+)
+async def game_guess_number(message: types.Message):
+    '''Отлов нажатой кнопки, и подключение функционала.'''
+    commands = {
+        GAMES_GUESS_NUMBER: game_number,
+        ME_PROFILE: profile_user,
+        CONVERT_WORD_IN_BINARY_CODE: byte_message,
+        CONVERT_BIBARY_CODE_IN_WORD: transcript,
+    }
+    selected_command = commands.get(message.text)
+
+    if selected_command:
+        await selected_command(message)
 
 
 if __name__ == '__main__':
