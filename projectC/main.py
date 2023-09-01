@@ -267,7 +267,7 @@ async def process_name(message: types.Message, state: FSMContext):
     await bot.send_message(chat_id=chat_id, text=messages)
 
 
-@dp.message_handler(commands=['profile'])
+@dp.message_handler(commands=['me_profile'])
 async def profile_user(message: types.Message):
     get_user = get_profile_users(message)
     await bot.send_message(chat_id=message['from']['id'], text=get_user)
@@ -288,7 +288,7 @@ async def send_welcome(message: types.Message):
     button_1 = types.KeyboardButton(text='/byte')
     button_2 = types.KeyboardButton(text='/transcript')
     button_3 = types.KeyboardButton(text='/Game_guess_number')
-    button_4 = types.KeyboardButton(text='/profile')
+    button_4 = types.KeyboardButton(text='/me_profile')
     button_5 = types.KeyboardButton(text='/cancel')
     keyboard.add(button_1, button_2, button_3, button_4, button_5)
 
