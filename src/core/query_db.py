@@ -3,9 +3,9 @@ import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from core.utils import get_message_profile_user
-from models.models import User
+from aiogram.types import Message
+from src.games.guess_number.utils import get_message_profile_user
+from src.core.models.models import User
 
 logging.basicConfig(
     format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s',
@@ -23,6 +23,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 
+
+
 def save_data_commit():
     '''Сохраняет данные в БД.'''
     try:
@@ -31,9 +33,11 @@ def save_data_commit():
         session.rollback()
         logging.ERROR(f'Ошибка создания юзера: {err}')
         session.close()
+    finally:
+        session.close()
 
 
-def create_user(data):
+async def create_user(data):
     '''Создание профиля пользователя если нет в БД.'''
     user = data['from']
 
@@ -73,9 +77,9 @@ def game_data_update_users_profile(data_user: dict, value: int) -> None:
     save_data_commit()
 
 
-def get_profile_users(data_user: dict):
+async def get_profile_users(data_user: Message):
     '''Получение профиля пользователя.'''
-    user = data_user['from']
+    user = data_user.from_user.id
     user_profile = session.query(User).filter_by(user_id=user['id']).first()
     if user_profile is None:
         user_profile = create_user(data_user)

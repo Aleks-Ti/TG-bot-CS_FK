@@ -12,7 +12,7 @@ def word_declension(count) -> str:
 
 
 def get_message_profile_user(instance: object, best_result=False):
-    '''Формирование сообщения профиля пользователя.'''
+    '''Возвращает сформирование сообщение профиля пользователя.'''
     registered_at = str(instance.registered_at)
     registered_at = datetime.strptime(registered_at, '%Y-%m-%d %H:%M:%S.%f')
     formatted_date = registered_at.strftime('%d %B %Y')
