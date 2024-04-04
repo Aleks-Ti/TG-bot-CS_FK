@@ -1,23 +1,13 @@
 from aiogram import types
-import logging
-from os import getenv
 from random import choice, randint
-import os
-from aiogram import Bot, Dispatcher, types, F, Router
-from dotenv import load_dotenv
 import asyncio
-import sys
-from aiogram
+
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters import CommandStart, Command,
-from src.utils.buttons import MainKeyboard as mk
-from aiogram.enums import ParseMode
-from aiogram.types import Message
-from aiogram.utils.markdown import hbold
-from core.query_db import (
+from src.user.query import (
     create_user,
-    game_data_update_users_profile,
-    get_profile_users,
+)
+from src.games.guess_query import (
+    guess_game_update
 )
 from aiogram.fsm.context import FSMContext
 from src.games.guess_number.utils import word_declension
@@ -25,11 +15,10 @@ from src.games.guess_number.stiker import (
     COLD_STICKER_LIST,
     HOT_STICKER_LIST,
     NOT_STICKER_LIST,
-    STICKER_ANGRY_HACKER,
-    STICKER_FANNY_HACKER,
     WIN_STICKER_LIST,
 )
-from src.main import dp, bot
+# from src.main import dp, bot
+from aiogram import Bot
 
 class GameCon:
     """Game conditions.
@@ -53,17 +42,15 @@ class GamesState(StatesGroup):
     cancel = State()
 
 
-@dp.message()
 async def sticker_message(id, sticker, message: types.Message):
     """Возвращает рандомный стикер из списка."""
-    await message.s(
+    await message.sticker(
         chat_id=id,
         sticker=choice(sticker),
     )
 
 
-@dp.message_handler(state=GamesState.name)
-async def guess_number(message: types.Message, state: FSMContext):
+async def guess_number(message: types.Message, state: FSMContext, bot: Bot):
     """Отправка сообщения c результатом игры."""
     chat_id = message.from_user.id
     secret = GameCon.SECRETS_NUM_GAME[chat_id]
@@ -104,7 +91,7 @@ async def guess_number(message: types.Message, state: FSMContext):
             count_attempts = GameCon.COUNT_ATTEMPTS.pop(chat_id)
             del GameCon.SECRETS_NUM_GAME[chat_id]
             create_user(message)
-            game_data_update_users_profile(message, count_attempts)
+            guess_game_update(message, count_attempts)
             await bot.send_message(
                 chat_id=chat_id,
                 text='#######🎉🎉🎉\n'
@@ -122,7 +109,6 @@ async def guess_number(message: types.Message, state: FSMContext):
             break
 
 
-@dp.message_handler(commands=['game_guess_number'])
 async def info_game_number(message: types.Message):
     """Пользовательский ввод и состояние для игры."""
     await GamesState.name.set()

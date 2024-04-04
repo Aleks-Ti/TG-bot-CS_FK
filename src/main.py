@@ -12,11 +12,10 @@ from src.utils.buttons import MainKeyboard as mk
 from aiogram.enums import ParseMode
 from aiogram.types import Message
 from aiogram.utils.markdown import hbold
-from core.query_db import (
+from src.user.query import (
     create_user,
-    game_data_update_users_profile,
-    get_profile_users,
 )
+from src.games.guess_number.guess_game import GameCon, GamesState, guess_number as _guess_number
 from src.games.guess_number.guess_game import info_game_number
 from aiogram.fsm.context import FSMContext
 load_dotenv()
@@ -56,12 +55,6 @@ class ConvertState(StatesGroup):
     cancel = State()
 
 
-
-
-
-
-
-
 @dp.message(Command("cancel"))
 @dp.message((F.text.casefold() == mk.cancel) | (F.text == mk.cancel))
 async def cancel_handler(message: types.Message, state):
@@ -75,7 +68,7 @@ async def cancel_handler(message: types.Message, state):
         await message.answer('Нет активных операций для отмены.')
 
 
-@dp.message()
+# @dp.message()
 async def byte_message(message: Message):
     """Пользовательский ввод и состояние для конвертации."""
     await ByteState.name.set()
@@ -85,22 +78,31 @@ async def byte_message(message: Message):
     )
 
 
-@dp.message()
+# @dp.message()
 async def transcript(message: Message):
     """Пользовательский ввод и состояние для дешифрации."""
     await ConvertState.name.set()
     await message.reply('Введите двоичный код 📟 для дешифрации___ ')
 
 
+# start guess game
+
+
 @dp.message((F.text == mk.GAMES_GUESS_NUMBER))
 async def start_guess_game(message: Message):
-    await info_game_number()
-    
+    await info_game_number(message)
 
-@dp.message()
+
+# @dp.message(GamesState.name)
+async def guess_number(message: types.Message, state: FSMContext):
+    await _guess_number(message, state)
+# end guess game
+
+
+# @dp.message()
 async def profile_user(message: Message):
     get_user = await get_profile_users(message)
-    await bot.send_sticker(chat_id=message.from_user.id, text=get_user)
+    await bot.send_message(chat_id=message.from_user.id, text=get_user)
 
 
 @dp.message(CommandStart())
@@ -112,8 +114,10 @@ async def send_welcome(message: Message):
         create_user - создания юзера и занесения в базу данных.
     """
 
-    await create_user(message)
-
+    try:
+        await create_user(message)
+    except Exception as err:
+        print(err)
     button_1 = types.KeyboardButton(text=mk.CONVERT_WORD_IN_BINARY_CODE)
     button_2 = types.KeyboardButton(text=mk.CONVERT_BINARY_CODE_IN_WORD)
     button_3 = types.KeyboardButton(text=mk.GAMES_GUESS_NUMBER)
@@ -141,10 +145,12 @@ async def main(bot) -> None:
 
 
 if __name__ == "__main__":
-    print(TELEGRAM_TOKEN)
-    bot = Bot(TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
+    bot = Bot(TELEGRAM_TOKEN, default=ParseMode.HTML)
     try:
+        print("поехали")
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
         asyncio.run(main(bot))
     except KeyboardInterrupt:
         pass
+    except Exception as err:
+        logging.exception(f"Error. {err}")

@@ -10,8 +10,8 @@ endif
 start:
 	python src/main.py 
 
-make rivision:
-	alembic revision --autogenerate -m "Added account table"
+rivision:
+  alembic revision --autogenerate -m "Added account table"
 
-make migrate:
+migrate:
 	alembic upgrade head
