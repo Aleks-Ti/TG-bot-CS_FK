@@ -1,17 +1,17 @@
 ifeq (revision,$(firstword $(MAKECMDGOALS)))
-  # use the rest as arguments for run
-  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  # ... and turn them into do-nothing targets
-  $(eval $(RUN_ARGS):;@:)
+    # use the rest as arguments for run
+    RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+    # ... and turn them into do-nothing targets
+    $(eval $(RUN_ARGS):;@:)
 endif
 
 .PHONY:
 
 start:
-	python src/main.py 
+    python src/main.py 
 
 rivision:
-  alembic revision --autogenerate -m "Added account table"
+    alembic revision --autogenerate -m "Added account table"
 
 migrate:
-	alembic upgrade head
+    alembic upgrade head
