@@ -1,8 +1,7 @@
 import logging
 from os import getenv
-from random import choice, randint
 import os
-from aiogram import Bot, Dispatcher, types, F, Router
+from aiogram import Bot, Dispatcher, types, F
 from dotenv import load_dotenv
 import asyncio
 import sys
@@ -11,13 +10,14 @@ from aiogram.filters import CommandStart, Command
 from src.utils.buttons import MainKeyboard as mk
 from aiogram.enums import ParseMode
 from aiogram.types import Message
-from aiogram.utils.markdown import hbold
 from src.user.query import (
     create_user, get_profile_users
 )
 
 from src.games.guess_number.guess_game import info_game_number, guess_number as _guess_number
 from aiogram.fsm.context import FSMContext
+from src.games.binary_converter.converter import transcript_byte as _transcript_byte, transcript_word as _transcript_word
+
 load_dotenv()
 
 logging.basicConfig(
@@ -35,7 +35,7 @@ TELEGRAM_CHAT_ID = getenv('CHAT_ID')
 RETRY_PERIOD = 10  # Период обращения
 
 
-class GamesState(StatesGroup):
+class GuessGamesState(StatesGroup):
     """Guess game.
     Ожидание пользовательского ввода guess game.
     """
@@ -44,7 +44,7 @@ class GamesState(StatesGroup):
     cancel = State()
 
 
-class ByteState(StatesGroup):
+class ByteInWordState(StatesGroup):
     """Машина состояния.
 
     Ожидание пользовательского ввода для конвертации в байт код.
@@ -54,7 +54,7 @@ class ByteState(StatesGroup):
     cancel = State()
 
 
-class ConvertState(StatesGroup):
+class WordInByteState(StatesGroup):
     """Машина состояния.
 
     Ожидание пользовательского ввода для конвертации байт кода в utf-8.
@@ -79,52 +79,62 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     except Exception as err:
         print(err)
 
-# @dp.message()
-async def byte_message(message: Message):
+
+# start convert word in binary
+@dp.message((F.text == mk.CONVERT_WORD_IN_BINARY_CODE))
+async def byte_message(message: Message, state: FSMContext):
     """Пользовательский ввод и состояние для конвертации."""
-    await ByteState.name.set()
-    await message.reply(
+    await state.set_state(WordInByteState.name)
+    await message.answer(
         'Введите ваше слово или имя, для конвертации '
         'в двоичный код 🦾'
     )
 
 
-# @dp.message()
-async def transcript(message: Message):
-    """Пользовательский ввод и состояние для дешифрации."""
-    await ConvertState.name.set()
-    await message.reply('Введите двоичный код 📟 для дешифрации___ ')
+@dp.message(WordInByteState.name)
+async def transcript_word(message: types.Message, state: FSMContext):
+    await _transcript_word(message, state)
+# end convert word in binary
 
+
+# start convert binary in word
+# NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
+@dp.message((F.text == mk.CONVERT_BINARY_CODE_IN_WORD))
+async def start_transcript(message: Message, state: FSMContext):
+    """Пользовательский ввод и состояние для дешифрации."""
+    await state.set_state(ByteInWordState.name)
+    await message.answer('Введите двоичный код 📟 для дешифрации___ ')
+
+
+@dp.message(ByteInWordState.name)
+async def transcript_byte(message: types.Message, state: FSMContext):
+    await _transcript_byte(message, state)
+# end convert binary in word
 
 # start guess game
-
+# NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
 @dp.message((F.text == mk.GAMES_GUESS_NUMBER))
 async def start_guess_game(message: Message, state: FSMContext):
-    await info_game_number(message, state, GamesState)
+    await info_game_number(message, state, GuessGamesState)
 
-
-@dp.message(GamesState.name)
+@dp.message(GuessGamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
     await _guess_number(message, state)
-
 # end guess game
 
 
 @dp.message((F.text == mk.ME_PROFILE))
 async def profile_user(message: Message):
-    try:
-        get_user = await get_profile_users(message)
-        answer = (
-            f"Результаты в играх:\n\t\tbinary_converter:\n    "
-            f"{get_user.binary_converter if get_user.binary_converter else "Нет результатов"}\n  "
-            f"guess_number:\n    "
-            f"{get_user.guess_number if get_user.guess_number else "Нет результатов"}\n  "
-            f"haort_pyramid:\n    "
-            f"{get_user.game_profile_haort_pyramid if get_user.game_profile_haort_pyramid else "Нет результатов"}"
-        )
-        await message.answer(text=answer)
-    except Exception as err:
-        print(err)
+    get_user = await get_profile_users(message)
+    answer = (
+        f"Результаты в играх:\n\t\tbinary_converter:\n    "
+        f"{get_user.binary_converter if get_user.binary_converter else "Нет результатов"}\n  "
+        f"guess_number:\n    "
+        f"{get_user.guess_number.best_result if get_user.guess_number else "Нет результатов"}\n  "
+        f"haort_pyramid:\n    "
+        f"{get_user.game_profile_haort_pyramid[0].best_result if get_user.game_profile_haort_pyramid else "Нет результатов"}"
+    )
+    await message.answer(text=answer)
 
 
 @dp.message(CommandStart())
@@ -140,38 +150,37 @@ async def send_welcome(message: Message):
         await create_user(message)
     except Exception as err:
         print(err)
-    try:
-        button_1 = types.KeyboardButton(text=mk.CONVERT_WORD_IN_BINARY_CODE)
-        button_2 = types.KeyboardButton(text=mk.CONVERT_BINARY_CODE_IN_WORD)
-        button_3 = types.KeyboardButton(text=mk.GAMES_GUESS_NUMBER)
-        button_4 = types.KeyboardButton(text=mk.ME_PROFILE)
-        button_5 = types.KeyboardButton(text=mk.cancel)
-        keyboard = types.ReplyKeyboardMarkup(
-            keyboard=[
-                        [button_1], [button_2], [button_3], [button_4], [button_5],
-                    ],
-            resize_keyboard=True,
-        )
-    except Exception as err:
-        print(err)
-    try:
-        await message.answer(
-            text='Привет!\nХочешь увидеть, как выглядит любой символ, '
-            'или мб твоё имя в байтовом представлении?! - жми -> /byte\n'
-            'Если нужно конвертировать машинный код в слова или буквы, '
-            'то жми -> /transcript\n'
-            'А может сыграем в игру Угадай число? - жми -> /numbers_game\n'
-            'Или жми кнопки внизу 👇👇👇',
-            reply_markup=keyboard,
-        )
-    except Exception as err:
-        print(err)
+
+    button_1 = types.KeyboardButton(text=mk.CONVERT_WORD_IN_BINARY_CODE)
+    button_2 = types.KeyboardButton(text=mk.CONVERT_BINARY_CODE_IN_WORD)
+    button_3 = types.KeyboardButton(text=mk.GAMES_GUESS_NUMBER)
+    button_4 = types.KeyboardButton(text=mk.ME_PROFILE)
+    button_5 = types.KeyboardButton(text=mk.cancel)
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[
+                    [button_1], [button_2], [button_3], [button_4], [button_5],
+                ],
+        resize_keyboard=True,
+    )
+
+    await message.answer(
+        text='Привет!\nХочешь увидеть, как выглядит любой символ, '
+        'или мб твоё имя в байтовом представлении?! - жми -> /byte\n'
+        'Если нужно конвертировать машинный код в слова или буквы, '
+        'то жми -> /transcript\n'
+        'А может сыграем в игру Угадай число? - жми -> /numbers_game\n'
+        'Или жми кнопки внизу 👇👇👇',
+        reply_markup=keyboard,
+    )
 
 
 async def main() -> None:
-    bot = Bot(TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
-    await dp.start_polling(bot)
-
+    try:
+        bot = Bot(TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
+        await dp.start_polling(bot)
+    except Exception as err:
+        print(err)
+        logging.exception(f"Error: {err}")
 
 if __name__ == "__main__":
     try:
