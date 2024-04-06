@@ -27,7 +27,7 @@ STICKER_FISH_HOT = (
 STICKER_LIGHT_HOT = (
     r"CAACAgIAAxkBAAEJ2oBkxZ2sI0g51z2qcOTRErhY0VJfSQACkBAAAmteqEgcGk7MnoBFmC8E"
 )
-# start block sticker HOT
+# end block sticker HOT
 
 
 # start block sticker NO

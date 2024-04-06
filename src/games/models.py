@@ -33,9 +33,12 @@ class BinaryConverter(Base):
     __tablename__ = "binary_converter"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, nullable=False, unique=True)
-    total_try: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
-    count_encrypted_characters: Mapped[int] = mapped_column(sa.Integer, nullable=True, unique=False)
-    number_decoded_characters: Mapped[int] = mapped_column(sa.Integer, nullable=True, unique=False)
+    total_try_convert_word_in_byte: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
+    total_try_convert_byte_in_word: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
+    count_encrypted_characters: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
+    count_encrypted_word: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
+    number_decoded_characters: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
+    number_decoded_word: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
     game_profile_id: Mapped[int] = mapped_column(sa.ForeignKey("game_profile.id"), nullable=False, unique=True)
 
     game_profile = relationship("GameProfile", back_populates="binary_converter", uselist=False)

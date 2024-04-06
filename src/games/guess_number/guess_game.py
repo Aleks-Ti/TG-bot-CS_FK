@@ -4,14 +4,14 @@ from random import choice, randint
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 
-from src.games.guess_number.stiker import (
+from src.games.guess_number.utils import word_declension
+from src.games.guess_query import guess_game_update
+from src.utils.stikers import (
     COLD_STICKER_LIST,
     HOT_STICKER_LIST,
     NOT_STICKER_LIST,
     WIN_STICKER_LIST,
 )
-from src.games.guess_number.utils import word_declension
-from src.games.guess_query import guess_game_update
 
 
 class GameCon:

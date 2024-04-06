@@ -18,6 +18,7 @@ from src.games.guess_number.guess_game import guess_number as _guess_number
 from src.games.guess_number.guess_game import info_game_number
 from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import MainKeyboard as mk
+from src.utils.buttons import ProfileInlineKeyboard as pic
 
 load_dotenv()
 
@@ -81,7 +82,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         print(err)
 
 
-# start convert word in binary
+# start CONVERT WORD IN BINARY
 @dp.message((F.text == mk.CONVERT_WORD_IN_BINARY_CODE))
 async def byte_message(message: Message, state: FSMContext):
     """Пользовательский ввод и состояние для конвертации."""
@@ -95,10 +96,10 @@ async def byte_message(message: Message, state: FSMContext):
 @dp.message(WordInByteState.name)
 async def transcript_word(message: types.Message, state: FSMContext):
     await _transcript_word(message, state)
-# end convert word in binary
+# end CONVERT WORD IN BINARY
 
 
-# start convert binary in word
+# start CONVERT BINARY IN WORD
 # NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
 @dp.message((F.text == mk.CONVERT_BINARY_CODE_IN_WORD))
 async def start_transcript(message: Message, state: FSMContext):
@@ -107,35 +108,91 @@ async def start_transcript(message: Message, state: FSMContext):
     await message.answer("Введите двоичный код 📟 для дешифрации___ ")
 
 
+# NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
 @dp.message(ByteInWordState.name)
 async def transcript_byte(message: types.Message, state: FSMContext):
     await _transcript_byte(message, state)
-# end convert binary in word
+# end CONVERT BINARY IN WORD
 
-# start guess game
-# NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
+
+# start GUESS GAME
 @dp.message((F.text == mk.GAMES_GUESS_NUMBER))
 async def start_guess_game(message: Message, state: FSMContext):
     await info_game_number(message, state, GuessGamesState)
 
+
 @dp.message(GuessGamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
     await _guess_number(message, state)
-# end guess game
+# end GUESS GAME
+
+
+@dp.callback_query((F.data == pic.guess_game_profile))
+async def guess_game_profile(callback_query: types.CallbackQuery):
+    get_profile = await get_profile_users(callback_query)
+    answer = "#" * 3 + "Угадай Число!\n"
+    if guess_number := get_profile.guess_number:
+        answer += f"Лучший результат: &lt; {guess_number.best_result} &gt;\n "
+        answer += f"Общее количество попыток: &lt; {guess_number.total_number_games} &gt;\n"
+    else:
+        answer += " Нет результатов\n"
+    await callback_query.message.answer(text=answer)
+
+
+@dp.callback_query(F.data == pic.converter_profile)
+async def converter_profile(callback_query: types.CallbackQuery):
+    try:
+        get_profile = await get_profile_users(callback_query)
+        answer = "#" * 3 + "Конвертер\n"
+        if binary_converter := get_profile.binary_converter:
+            answer += " * Конвертирований слов в двоичное представление:\n"
+            answer += f"  --  Общее количество попыток: &lt; {binary_converter.total_try_convert_word_in_byte} &gt;\n"
+            answer += f"  --  Количество слов: &lt; {binary_converter.count_encrypted_word} &gt;\n"
+            answer += f"  --  Итоговое количство символов: &lt; {binary_converter.count_encrypted_characters} &gt;\n"
+
+            answer += " * Конвертирований двоичного кода в символы:\n"
+            answer += f"  --  Общее количество попыток: &lt; {binary_converter.total_try_convert_byte_in_word} &gt;\n"
+            answer += f"  --  Количество символов представленных в двоичном коде: &lt; {binary_converter.number_decoded_word} &gt;\n"
+            answer += f"  --  Общее количество переданных нулей и единиц: &lt; {binary_converter.number_decoded_characters} &gt;\n"
+        else:
+            answer += " Нет результатов\n"
+        await callback_query.message.answer(text=answer)
+    except Exception as err:
+        print(err)
+
+
+@dp.callback_query(F.data == pic.haort_game_profile)
+async def haort_game_profile(callback_query: types.CallbackQuery):
+    get_profile = await get_profile_users(callback_query)
+    answer = "#" * 3 + "Пирамида Хаорта\n"
+    if gphp := get_profile.game_profile_haort_pyramid:
+        answer += f"Лучший результат: &lt; {gphp.best_result} &gt;\n"
+        answer += f"Общее количество попыток: &lt; {gphp.total_number_games} &gt;\n"
+    else:
+        answer += " Нет результатов\n"
+    await callback_query.message.answer(text=answer)
 
 
 @dp.message((F.text == mk.ME_PROFILE))
 async def profile_user(message: Message):
-    get_user = await get_profile_users(message)
-    answer = (
-        f"Результаты в играх:\n\t\tbinary_converter:\n    "
-        f"{get_user.binary_converter if get_user.binary_converter else "Нет результатов"}\n  "
-        f"guess_number:\n    "
-        f"{get_user.guess_number.best_result if get_user.guess_number else "Нет результатов"}\n  "
-        f"haort_pyramid:\n    "
-        f"{get_user.game_profile_haort_pyramid[0].best_result if get_user.game_profile_haort_pyramid else "Нет результатов"}"
+    button_1 = types.InlineKeyboardButton(
+        text=pic.guess_game_profile, callback_data=pic.guess_game_profile,
     )
-    await message.answer(text=answer)
+    button_2 = types.InlineKeyboardButton(
+        text=pic.converter_profile, callback_data=pic.converter_profile,
+    )
+    button_3 = types.InlineKeyboardButton(
+        text=pic.haort_game_profile, callback_data=pic.haort_game_profile,
+    )
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[
+                    [button_1], [button_2], [button_3],
+                ],
+    )
+    await message.answer(
+        "Профиль какой игры хотите посмотреть?",
+        reply_markup=keyboard,
+    )
 
 
 @dp.message(CommandStart())
@@ -155,11 +212,12 @@ async def send_welcome(message: Message):
     button_1 = types.KeyboardButton(text=mk.CONVERT_WORD_IN_BINARY_CODE)
     button_2 = types.KeyboardButton(text=mk.CONVERT_BINARY_CODE_IN_WORD)
     button_3 = types.KeyboardButton(text=mk.GAMES_GUESS_NUMBER)
-    button_4 = types.KeyboardButton(text=mk.ME_PROFILE)
-    button_5 = types.KeyboardButton(text=mk.cancel)
+    button_4 = types.KeyboardButton(text=mk.HAORT_GAME)
+    button_5 = types.KeyboardButton(text=mk.ME_PROFILE)
+    button_6 = types.KeyboardButton(text=mk.cancel)
     keyboard = types.ReplyKeyboardMarkup(
         keyboard=[
-                    [button_1], [button_2], [button_3], [button_4], [button_5],
+                    [button_1], [button_2], [button_3], [button_4], [button_5], [button_6],
                 ],
         resize_keyboard=True,
     )

@@ -10,7 +10,7 @@ from src.core.connector_for_alembic_and_alchemy import DataBaseConfig as conf
 
 
 def create_async_engine(url: URL | str) -> AsyncEngine:
-    return _create_async_engine(url=url, echo=True, pool_pre_ping=True)
+    return _create_async_engine(url=url, echo=False, pool_pre_ping=True)
 
 
 async_session_maker: Callable[..., AsyncSession] = sessionmaker(

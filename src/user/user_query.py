@@ -7,9 +7,9 @@ from src.games.models import GameProfile, GameProfileHaortPyramid
 from src.user.models import User
 
 
-async def get_or_create_user(message: Message):
+async def get_or_create_user(message: Message) -> User:
     async with async_session_maker() as session:
-        stmt = select(User).where(message.from_user.id == User.tg_user_id)
+        stmt = select(User).where(message.from_user.id == User.tg_user_id).options(selectinload(User.game_profile))
         res = (await session.execute(stmt)).scalar_one_or_none()
         if res:
             return res
@@ -20,13 +20,19 @@ async def get_or_create_user(message: Message):
                 "first_name": message.from_user.first_name,
                 "last_name": message.from_user.last_name,
             }
+
             stmt_user = insert(User).values(**user_data).returning(User)
             res_user = await session.execute(stmt_user)
             await session.flush()
             user = res_user.scalar_one()
+
             stmt_game_profile = insert(GameProfile).values({"user_id": user.id})
             await session.execute(stmt_game_profile)
+
+            stmt = select(User).where(message.from_user.id == User.tg_user_id).options(selectinload(User.game_profile))
+            user = await session.execute(stmt)
             await session.commit()
+            return user.scalar_one()
 
 
 async def get_profile_users(message: Message):

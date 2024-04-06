@@ -1,8 +1,8 @@
 """Added account table
 
-Revision ID: fd0f7a7b73be
+Revision ID: b0266e9c14fd
 Revises: 
-Create Date: 2024-04-04 22:31:32.566057
+Create Date: 2024-04-06 17:23:37.411503
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'fd0f7a7b73be'
+revision: str = 'b0266e9c14fd'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -51,9 +51,12 @@ def upgrade() -> None:
     )
     op.create_table('binary_converter',
     sa.Column('id', sa.BigInteger(), nullable=False),
-    sa.Column('total_try', sa.Integer(), nullable=True),
+    sa.Column('total_try_convert_word_in_byte', sa.Integer(), nullable=True),
+    sa.Column('total_try_convert_byte_in_word', sa.Integer(), nullable=True),
     sa.Column('count_encrypted_characters', sa.Integer(), nullable=True),
+    sa.Column('count_encrypted_word', sa.Integer(), nullable=True),
     sa.Column('number_decoded_characters', sa.Integer(), nullable=True),
+    sa.Column('number_decoded_word', sa.Integer(), nullable=True),
     sa.Column('game_profile_id', sa.BigInteger(), nullable=False),
     sa.ForeignKeyConstraint(['game_profile_id'], ['game_profile.id'], ),
     sa.PrimaryKeyConstraint('id'),
