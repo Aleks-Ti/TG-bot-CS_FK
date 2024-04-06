@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from os import getenv
-from sqlalchemy.engine import URL
+
 from dotenv import load_dotenv
+from sqlalchemy.engine import URL
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ class DataBaseConfig:
         for var in required_vars:
             if getattr(self, var) is None:
                 raise ValueError(
-                    f"Нет переменной {var} для коннекта БД в окружении проекта."
+                    f"Нет переменной {var} для коннекта БД в окружении проекта.",
                 )
 
     def build_connection_str(self) -> str:

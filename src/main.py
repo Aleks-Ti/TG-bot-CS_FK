@@ -1,36 +1,37 @@
-import logging
-from os import getenv
-import os
-from aiogram import Bot, Dispatcher, types, F
-from dotenv import load_dotenv
 import asyncio
+import logging
+import os
 import sys
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters import CommandStart, Command
-from src.utils.buttons import MainKeyboard as mk
-from aiogram.enums import ParseMode
-from aiogram.types import Message
-from src.user.query import (
-    create_user, get_profile_users
-)
+from os import getenv
 
-from src.games.guess_number.guess_game import info_game_number, guess_number as _guess_number
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.enums import ParseMode
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from src.games.binary_converter.converter import transcript_byte as _transcript_byte, transcript_word as _transcript_word
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message
+from dotenv import load_dotenv
+
+from src.games.binary_converter.converter import transcript_byte as _transcript_byte
+from src.games.binary_converter.converter import transcript_word as _transcript_word
+from src.games.guess_number.guess_game import guess_number as _guess_number
+from src.games.guess_number.guess_game import info_game_number
+from src.user.user_query import get_or_create_user, get_profile_users
+from src.utils.buttons import MainKeyboard as mk
 
 load_dotenv()
 
 logging.basicConfig(
-    format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(funcName)s - %(levelname)s - %(message)s",
     level=logging.INFO,
-    filename=os.path.join(os.path.dirname(__file__), 'program.log'),
-    encoding='utf-8',
+    filename=os.path.join(os.path.dirname(__file__), "program.log"),
+    encoding="utf-8",
 )
 
 dp = Dispatcher()
 
-TELEGRAM_TOKEN = getenv('TOKEN')
-TELEGRAM_CHAT_ID = getenv('CHAT_ID')
+TELEGRAM_TOKEN = getenv("TOKEN")
+TELEGRAM_CHAT_ID = getenv("CHAT_ID")
 
 RETRY_PERIOD = 10  # Период обращения
 
@@ -71,11 +72,11 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     try:
         current_state = await state.get_state()
         if current_state is not None:
-            logging.info('Cancelling state %r', current_state)
+            logging.info("Cancelling state %r", current_state)
             await state.clear()
-            await message.answer('Операция отменена.')
+            await message.answer("Операция отменена.")
         else:
-            await message.answer('Нет активных операций для отмены.')
+            await message.answer("Нет активных операций для отмены.")
     except Exception as err:
         print(err)
 
@@ -86,8 +87,8 @@ async def byte_message(message: Message, state: FSMContext):
     """Пользовательский ввод и состояние для конвертации."""
     await state.set_state(WordInByteState.name)
     await message.answer(
-        'Введите ваше слово или имя, для конвертации '
-        'в двоичный код 🦾'
+        "Введите ваше слово или имя, для конвертации "
+        "в двоичный код 🦾",
     )
 
 
@@ -103,7 +104,7 @@ async def transcript_word(message: types.Message, state: FSMContext):
 async def start_transcript(message: Message, state: FSMContext):
     """Пользовательский ввод и состояние для дешифрации."""
     await state.set_state(ByteInWordState.name)
-    await message.answer('Введите двоичный код 📟 для дешифрации___ ')
+    await message.answer("Введите двоичный код 📟 для дешифрации___ ")
 
 
 @dp.message(ByteInWordState.name)
@@ -147,7 +148,7 @@ async def send_welcome(message: Message):
     """
 
     try:
-        await create_user(message)
+        await get_or_create_user(message)
     except Exception as err:
         print(err)
 
@@ -164,12 +165,12 @@ async def send_welcome(message: Message):
     )
 
     await message.answer(
-        text='Привет!\nХочешь увидеть, как выглядит любой символ, '
-        'или мб твоё имя в байтовом представлении?! - жми -> /byte\n'
-        'Если нужно конвертировать машинный код в слова или буквы, '
-        'то жми -> /transcript\n'
-        'А может сыграем в игру Угадай число? - жми -> /numbers_game\n'
-        'Или жми кнопки внизу 👇👇👇',
+        text="Привет!\nХочешь увидеть, как выглядит любой символ, "
+        "или мб твоё имя в байтовом представлении?! - жми -> /byte\n"
+        "Если нужно конвертировать машинный код в слова или буквы, "
+        "то жми -> /transcript\n"
+        "А может сыграем в игру Угадай число? - жми -> /numbers_game\n"
+        "Или жми кнопки внизу 👇👇👇",
         reply_markup=keyboard,
     )
 

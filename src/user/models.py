@@ -2,11 +2,12 @@ from datetime import datetime
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.core.base import Base
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, nullable=False, unique=True)
     username: Mapped[str] = mapped_column(sa.String(64), nullable=False, unique=True)
