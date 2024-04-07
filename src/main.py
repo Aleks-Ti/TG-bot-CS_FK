@@ -8,7 +8,6 @@ from aiogram import Bot, Dispatcher, F, types
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from dotenv import load_dotenv
 
@@ -16,6 +15,8 @@ from src.games.binary_converter.converter import transcript_byte as _transcript_
 from src.games.binary_converter.converter import transcript_word as _transcript_word
 from src.games.guess_number.guess_game import guess_number as _guess_number
 from src.games.guess_number.guess_game import info_game_number
+from src.games.haort_pyramid.haort_pyramid import start_haort_game as _start_haort_game
+from src.state_machine import ByteInWordState, GuessGamesState, HaortGamesState, WordInByteState
 from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import MainKeyboard as mk
 from src.utils.buttons import ProfileInlineKeyboard as pic
@@ -37,35 +38,6 @@ TELEGRAM_CHAT_ID = getenv("CHAT_ID")
 RETRY_PERIOD = 10  # Период обращения
 
 
-class GuessGamesState(StatesGroup):
-    """Guess game.
-    Ожидание пользовательского ввода guess game.
-    """
-
-    name = State()
-    cancel = State()
-
-
-class ByteInWordState(StatesGroup):
-    """Машина состояния.
-
-    Ожидание пользовательского ввода для конвертации в байт код.
-    """
-
-    name = State()
-    cancel = State()
-
-
-class WordInByteState(StatesGroup):
-    """Машина состояния.
-
-    Ожидание пользовательского ввода для конвертации байт кода в utf-8.
-    """
-
-    name = State()
-    cancel = State()
-
-
 @dp.message(Command("cancel"))
 @dp.message((F.text.casefold() == mk.cancel) | (F.text == mk.cancel))
 async def cancel_handler(message: types.Message, state: FSMContext):
@@ -82,7 +54,12 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         print(err)
 
 
-# start CONVERT WORD IN BINARY
+"""
+########################################
+START block convert WORD IN BINARY
+"""
+
+
 @dp.message((F.text == mk.CONVERT_WORD_IN_BINARY_CODE))
 async def byte_message(message: Message, state: FSMContext):
     """Пользовательский ввод и состояние для конвертации."""
@@ -96,10 +73,20 @@ async def byte_message(message: Message, state: FSMContext):
 @dp.message(WordInByteState.name)
 async def transcript_word(message: types.Message, state: FSMContext):
     await _transcript_word(message, state)
-# end CONVERT WORD IN BINARY
 
 
-# start CONVERT BINARY IN WORD
+"""
+END block convert WORD IN BINARY
+########################################
+"""
+
+
+"""
+########################################
+START block convert BINARY IN WORD
+"""
+
+
 # NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
 @dp.message((F.text == mk.CONVERT_BINARY_CODE_IN_WORD))
 async def start_transcript(message: Message, state: FSMContext):
@@ -112,10 +99,20 @@ async def start_transcript(message: Message, state: FSMContext):
 @dp.message(ByteInWordState.name)
 async def transcript_byte(message: types.Message, state: FSMContext):
     await _transcript_byte(message, state)
-# end CONVERT BINARY IN WORD
 
 
-# start GUESS GAME
+"""
+END block convert BINARY IN WORD
+########################################
+"""
+
+
+"""
+########################################
+START block GUESS GAME
+"""
+
+
 @dp.message((F.text == mk.GAMES_GUESS_NUMBER))
 async def start_guess_game(message: Message, state: FSMContext):
     await info_game_number(message, state, GuessGamesState)
@@ -124,7 +121,34 @@ async def start_guess_game(message: Message, state: FSMContext):
 @dp.message(GuessGamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
     await _guess_number(message, state)
-# end GUESS GAME
+
+
+"""
+END block GUESS GAME
+########################################
+"""
+
+
+"""
+########################################
+START block Pyramid Haort
+"""
+
+
+@dp.message((F.text == mk.HAORT_GAME))
+async def start_haort_game(message: Message, state: FSMContext):
+    await _start_haort_game(message, state, HaortGamesState)
+
+
+@dp.message(HaortGamesState.user_command)
+async def haort_game(message: types.Message, state: FSMContext):
+    await _start_haort_game(message, state)
+
+
+"""
+END block Pyramid Haort
+########################################
+"""
 
 
 @dp.callback_query((F.data == pic.guess_game_profile))
@@ -175,19 +199,11 @@ async def haort_game_profile(callback_query: types.CallbackQuery):
 
 @dp.message((F.text == mk.ME_PROFILE))
 async def profile_user(message: Message):
-    button_1 = types.InlineKeyboardButton(
-        text=pic.guess_game_profile, callback_data=pic.guess_game_profile,
-    )
-    button_2 = types.InlineKeyboardButton(
-        text=pic.converter_profile, callback_data=pic.converter_profile,
-    )
-    button_3 = types.InlineKeyboardButton(
-        text=pic.haort_game_profile, callback_data=pic.haort_game_profile,
-    )
+    button_1 = types.InlineKeyboardButton(text=pic.guess_game_profile, callback_data=pic.guess_game_profile)
+    button_2 = types.InlineKeyboardButton(text=pic.converter_profile, callback_data=pic.converter_profile)
+    button_3 = types.InlineKeyboardButton(text=pic.haort_game_profile, callback_data=pic.haort_game_profile)
     keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=[
-                    [button_1], [button_2], [button_3],
-                ],
+        inline_keyboard=[[button_1], [button_2], [button_3]],
     )
     await message.answer(
         "Профиль какой игры хотите посмотреть?",
@@ -216,9 +232,7 @@ async def send_welcome(message: Message):
     button_5 = types.KeyboardButton(text=mk.ME_PROFILE)
     button_6 = types.KeyboardButton(text=mk.cancel)
     keyboard = types.ReplyKeyboardMarkup(
-        keyboard=[
-                    [button_1], [button_2], [button_3], [button_4], [button_5], [button_6],
-                ],
+        keyboard=[[button_1], [button_2], [button_3], [button_4], [button_5], [button_6]],
         resize_keyboard=True,
     )
 
