@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 
 from src.games.guess_number.utils import word_declension
 from src.games.guess_query import guess_game_update
+from src.state_machine import GuessGamesState
 from src.utils.stikers import (
     COLD_STICKER_LIST,
     HOT_STICKER_LIST,
@@ -92,7 +93,7 @@ async def guess_number(message: types.Message, state: FSMContext):
         return
 
 
-async def info_game_number(message: types.Message, state: FSMContext, games_state):
+async def info_game_number(message: types.Message, state: FSMContext, games_state: GuessGamesState):
     """Пользовательский ввод и состояние для игры."""
     await state.set_state(games_state.name)
     identifier_user = message.from_user.id

@@ -16,8 +16,10 @@ class HaortGamesState(StatesGroup):
     Ожидание пользовательского ввода Haort game.
     """
 
+    name = State()
     game_difficulty = State()
     user_command = State()
+    last_pyramid_message = State()
     cancel = State()
 
 

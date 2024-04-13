@@ -23,9 +23,9 @@ class ProfileInlineKeyboard:
     Инлайн кнопки для меню напоминаний.
 
     Attributes:
-    - cycle_reminder = 'Циклическое напоминание'
-    - single_reminder = 'Одноразовое напоминание'
-    - cancel = 'Отмена'
+    - guess_game_profile = "профиль: Угадай число"
+    - converter_profile = "профиль: Конвертер"
+    - haort_game_profile = "профиль: Игра Хаорта"
     """
 
     guess_game_profile: str = "профиль: Угадай число"

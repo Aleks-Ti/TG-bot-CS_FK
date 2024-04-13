@@ -135,9 +135,44 @@ START block Pyramid Haort
 """
 
 
+@dp.callback_query(
+        (F.data == "4") |
+        (F.data == "5") |
+        (F.data == "6") |
+        (F.data == "6") |
+        (F.data == "7") |
+        (F.data == "8") |
+        (F.data == "9") |
+        (F.data == "10") |
+        (F.data == "11"),
+)
+async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext):
+    try:
+        await state.set_state(HaortGamesState.name)
+        # await state.set_data({"game_difficulty": int(callback_query.data)})
+        HaortGamesState.game_difficulty = int(callback_query.data)
+        await _start_haort_game(callback_query, state, HaortGamesState)
+    except Exception as err:
+        print(err)
+
+
 @dp.message((F.text == mk.HAORT_GAME))
-async def start_haort_game(message: Message, state: FSMContext):
-    await _start_haort_game(message, state, HaortGamesState)
+async def choose_games_difficulty(message: Message):
+    buttons = [
+        types.InlineKeyboardButton(
+            text=str(number_difficulty), callback_data=str(number_difficulty),
+        ) for number_difficulty in range(4, 12)
+    ]
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[buttons],
+    )
+    await message.answer(
+        "Выберите сложность игры",
+        reply_markup=keyboard,
+    )
+# @dp.message((F.text == mk.HAORT_GAME))
+# async def start_haort_game(message: Message, state: FSMContext):
+#     await _start_haort_game(message, state, HaortGamesState)
 
 
 @dp.message(HaortGamesState.user_command)
@@ -151,7 +186,7 @@ END block Pyramid Haort
 """
 
 
-@dp.callback_query((F.data == pic.guess_game_profile))
+@dp.callback_query(F.data == pic.guess_game_profile)
 async def guess_game_profile(callback_query: types.CallbackQuery):
     get_profile = await get_profile_users(callback_query)
     answer = "#" * 3 + "Угадай Число!\n"

@@ -5,13 +5,15 @@ from random import choice, randint
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 
+from src.state_machine import HaortGamesState
+
 """
 Можно изменять буквы, из расчёт на удобное для вас управление,
 как ABC так и 123, по желанию.
 """
-TOWER_1 = "Q"
-TOWER_2 = "W"
-TOWER_3 = "E"
+TOWER_1 = "Alpha"
+TOWER_2 = "Betta"
+TOWER_3 = "Gamma"
 
 
 class StackIsEmptyError(Exception):
@@ -45,7 +47,7 @@ class Stack:
             self.result.append(item)
 
 
-def builder_level_towers(disc: int, total_disc: int) -> str:
+def builder_level_towers(disc: int, total_disc: int, count: int) -> str:
     """Генерирует горизонтальный уровень башни."""
 
     result = ""
@@ -54,7 +56,10 @@ def builder_level_towers(disc: int, total_disc: int) -> str:
         result += space + "|_ _|" + space
     else:
         space = " " * ((total_disc) - disc)
-        result += space + "#" * disc + f"|_{disc}_|" + "#" * disc + space
+        if count > 9:
+            result += space + "#" * disc + f"|_{disc}_|" + "#" * (disc - 1) + space
+        else:
+            result += space + "#" * disc + f"|_{disc}_|" + "#" * disc + space
     return result
 
 
@@ -74,11 +79,12 @@ def show_towers(towers: dict[str, Stack], total_disc: int) -> None:
     count = 0
     result = ""
     while not count > total_disc:
-        result += builder_level_towers(tower_a[count], total_disc)
-        result += builder_level_towers(tower_b[count], total_disc)
-        result += builder_level_towers(tower_c[count], total_disc)
+        result += builder_level_towers(tower_a[count], total_disc, count)
+        result += builder_level_towers(tower_b[count], total_disc, count)
+        result += builder_level_towers(tower_c[count], total_disc, count) + "\n"
         count += 1
 
+    result = "<pre>" + result + "</pre>"
     return result
 
 
@@ -95,7 +101,7 @@ def game_condition_check(
     return False
 
 
-async def start_haort_game(message: types.Message, state: FSMContext, games_state) -> None:
+async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext, games_state: HaortGamesState) -> None:
     """Запуск одной сессии игры 'Ханойски башни'."""
 
     complete_tower = [x for x in range(games_state.game_difficulty, 0, -1)]
@@ -107,8 +113,8 @@ async def start_haort_game(message: types.Message, state: FSMContext, games_stat
     start_message = "Игра началась!\n"
     start_message += (
         (
-            f"Даны три пирамиды/стержня, слева направо:"
-            f" {TOWER_1}, {TOWER_2} и {TOWER_3}"
+            f"Даны три пирамиды/стержня, слева направо:\n"
+            f" <b>{TOWER_1}</b>, <b>{TOWER_2}</b> и <b>{TOWER_3}</b>\n"
         )
     )
     start_message += (
@@ -119,79 +125,52 @@ async def start_haort_game(message: types.Message, state: FSMContext, games_stat
             f" правильном порядке, чтобы победить!\n"
         )
     )
-    message = show_towers(towers, total_disc)
-    print(
+    message = show_towers(towers, games_state.game_difficulty)
+    start_message += (
             f"Переместите диск с одной башни на другую.\n"
             f"Пример команды: {TOWER_1}{TOWER_3} or {TOWER_1}{TOWER_2} or"
-            f" {TOWER_3}{TOWER_2} etc.\n",
-    )
-    while True:
-        user_input = str(input("Переместите диск:\t")).strip().upper()
-        if user_input in exit_games_comand:
-            color_print("Выход из игры.", Fore.CYAN)
-            sys.exit(1)
-        if (
-            not isinstance(user_input, str)
-            or len(user_input) != 2
-            or not all([x in (TOWER_1, TOWER_2, TOWER_3) for x in user_input])
-        ):
-            color_print(
-                (
-                    f"Команда, должна быть символом из двух букв английского"
-                    f" алфавита соответствующих названиям башен"
-                    f" {TOWER_1}, {TOWER_2} и {TOWER_3}."
-                    f"\n\tПример: {TOWER_1}{TOWER_3} or {TOWER_1}{TOWER_2} or"
-                    f" {TOWER_3}{TOWER_2} etc.\n"
-                ),
-            )
-            continue
+            f" {TOWER_3}{TOWER_2} etc.\n")
 
-        try:
-            disck_from_to_tower = towers[user_input[0]].pop()
-            towers[user_input[-1]].push(disck_from_to_tower)
-        except StackIsEmptyError:
-            color_print(
-                "В этой башне нет диска для перемещения."
-                " Выберите корректную комбинацию!\n",
-            )
-            continue
-        except IncorrectMove:
-            towers[user_input[0]].push(
-                disck_from_to_tower,
-            )  # лишняя операция, хоть и O(1)
-            color_print(
-                "Нельзя помещать больший диск на малый!\n",
-                Fore.YELLOW,
-            )
-        if game_condition_check(towers, complete_tower):
-            color_print("Вы победили! Отличный результат!\n", Fore.GREEN)
-            show_towers(towers, total_disc)
-            break
-        show_towers(towers, total_disc)
+    await callback_query.message.answer(text=start_message)
+    pyramid_message = await callback_query.message.answer(text=message)
+    games_state.last_pyramid_message = pyramid_message.message_id
+    # while True:
+    #     user_input = str(input("Переместите диск:\t")).strip().upper()
+    #     if (
+    #         not isinstance(user_input, str)
+    #         or len(user_input) != 2
+    #         or not all([x in (TOWER_1, TOWER_2, TOWER_3) for x in user_input])
+    #     ):
+    #         color_print(
+    #             (
+    #                 f"Команда, должна быть символом из двух букв английского"
+    #                 f" алфавита соответствующих названиям башен"
+    #                 f" {TOWER_1}, {TOWER_2} и {TOWER_3}."
+    #                 f"\n\tПример: {TOWER_1}{TOWER_3} or {TOWER_1}{TOWER_2} or"
+    #                 f" {TOWER_3}{TOWER_2} etc.\n"
+    #             ),
+    #         )
+    #         continue
 
-
-if __name__ == "__main__":
-    """
-    Запуск игры.
-
-    Constans:
-    - TOTAL_DISC: Количество дисков одной башни/игровое условие.
-
-    Чем больше дисков на башне (TOTAL_DISC), тем сложнее игра.
-    - 1 < TOTAL_DISC <= 4 - уровень легкий.
-    - 4 < TOTAL_DISC <= 7 - уровень средний.
-    - TOTAL_DISC > 7 - уровень сложный.
-    Не может TOTAL_DISC Ноль, также единица, бессмысленна.
-    """
-
-    TOTAL_DISC = 7
-    assert TOTAL_DISC > 2, (
-        "Не может быть меньше трёх дисков, игра бессмысленна"
-        " даже для наглядности, или для дитя малого!"
-        )
-    try:
-        main(TOTAL_DISC)
-    except KeyboardInterrupt:
-        pass
-    except SystemExit:
-        pass
+    #     try:
+    #         disck_from_to_tower = towers[user_input[0]].pop()
+    #         towers[user_input[-1]].push(disck_from_to_tower)
+    #     except StackIsEmptyError:
+    #         color_print(
+    #             "В этой башне нет диска для перемещения."
+    #             " Выберите корректную комбинацию!\n",
+    #         )
+    #         continue
+    #     except IncorrectMove:
+    #         towers[user_input[0]].push(
+    #             disck_from_to_tower,
+    #         )  # лишняя операция, хоть и O(1)
+    #         color_print(
+    #             "Нельзя помещать больший диск на малый!\n",
+    #             Fore.YELLOW,
+    #         )
+    #     if game_condition_check(towers, complete_tower):
+    #         color_print("Вы победили! Отличный результат!\n", Fore.GREEN)
+    #         show_towers(towers, total_disc)
+    #         break
+    #     show_towers(towers, total_disc)

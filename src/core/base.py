@@ -13,4 +13,3 @@ class Base:
         return cls.__name__.lower()
 
     __allow_unmapped__ = False
-
