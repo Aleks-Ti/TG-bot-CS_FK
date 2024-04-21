@@ -175,6 +175,7 @@ async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext):
     try:
         await state.update_data(game_difficulty=int(callback_query.data))
+        await state.update_data(number_of_permutations=0)
         await _start_haort_game(callback_query, state, HaortGamesState)
     except Exception as err:
         print(err)
@@ -182,7 +183,7 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
 
 @dp.message((F.text == mk.HAORT_GAME))
 async def choose_games_difficulty(message: Message, state: FSMContext):
-    await state.set_state(HaortGamesState.start_game)
+    # await state.set_state(HaortGamesState.start_game)
     buttons = [
         types.InlineKeyboardButton(
             text=str(number_difficulty), callback_data=str(number_difficulty),

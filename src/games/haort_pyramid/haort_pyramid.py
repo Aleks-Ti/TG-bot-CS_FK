@@ -77,7 +77,7 @@ def show_towers(towers: dict[str, Stack], total_disc: int) -> None:
         result = ""
 
 
-def game_condition_check(
+async def game_condition_check(
         towers: dict[str, Stack], victory_order: list[int],
 ) -> bool:
     """Проверка условий победы."""
@@ -109,7 +109,9 @@ def get_image(image_path):
 
 async def active_haort_game(callback_query: types.CallbackQuery, state: FSMContext, keyboard) -> None:
     state_data = await state.get_data()
+    complete_tower = [x for x in range((state_data["game_difficulty"]), 0, -1)]
     try:
+        await state.update_data(number_of_permutations=state_data["number_of_permutations"] + 1)
         TowerStack: dict[str, Stack] = state_data["towers_condition"]
         disck_from_to_tower = TowerStack[state_data["step_1"]].pop()
         TowerStack[callback_query.data].push(disck_from_to_tower)
@@ -131,8 +133,14 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
     output_image_path = "static/" + callback_query.message.from_user.first_name + "_hanoi_towers.png"
     # message_towers = show_towers(TowerStack, state_data["game_difficulty"])
     await text_to_image(output_image_path, TowerStack, state_data["game_difficulty"])
-    await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
-    await callback_query.message.edit_caption(reply_markup=keyboard)
+    if await game_condition_check(TowerStack, complete_tower):
+        await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
+        await callback_query.message.edit_caption(reply_markup=None)
+        await callback_query.message.answer(text="Ура! Это ПОБЕДА!")
+        await state.clear()
+    else:
+        await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
+        await callback_query.message.edit_caption(reply_markup=keyboard)
 
 
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext, games_state: HaortGamesState) -> None:
