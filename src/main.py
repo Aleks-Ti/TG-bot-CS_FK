@@ -15,9 +15,11 @@ from src.games.binary_converter.converter import transcript_byte as _transcript_
 from src.games.binary_converter.converter import transcript_word as _transcript_word
 from src.games.guess_number.guess_game import guess_number as _guess_number
 from src.games.guess_number.guess_game import info_game_number
+from src.games.haort_pyramid.haort_pyramid import active_haort_game as _active_haort_game
 from src.games.haort_pyramid.haort_pyramid import start_haort_game as _start_haort_game
 from src.state_machine import ByteInWordState, GuessGamesState, HaortGamesState, WordInByteState
 from src.user.user_query import get_or_create_user, get_profile_users
+from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.buttons import MainKeyboard as mk
 from src.utils.buttons import ProfileInlineKeyboard as pic
 
@@ -136,6 +138,37 @@ START block Pyramid Haort
 
 
 @dp.callback_query(
+        (F.data == hpik.TOWER_1) |
+        (F.data == hpik.TOWER_2) |
+        (F.data == hpik.TOWER_3),
+)
+async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
+    try:
+        buttons = {
+            hpik.TOWER_1: types.InlineKeyboardButton(text=hpik.TOWER_1, callback_data=hpik.TOWER_1),
+            hpik.TOWER_2: types.InlineKeyboardButton(text=hpik.TOWER_2, callback_data=hpik.TOWER_2),
+            hpik.TOWER_3: types.InlineKeyboardButton(text=hpik.TOWER_3, callback_data=hpik.TOWER_3),
+        }
+        state_data = await state.get_data()
+        if state_data.get("step_1", None) is None:
+            buttons.pop(callback_query.data)
+            new_buttons = [x for x in buttons.values()]
+            keyboard = types.InlineKeyboardMarkup(
+                inline_keyboard=[new_buttons],
+            )
+            await callback_query.message.edit_caption(reply_markup=keyboard)
+            await state.update_data(step_1=callback_query.data)
+        else:
+            buttons = [x for x in buttons.values()]
+            keyboard = types.InlineKeyboardMarkup(
+                inline_keyboard=[buttons],
+            )
+            await _active_haort_game(callback_query, state, keyboard)
+    except Exception as err:
+        print(err)
+
+
+@dp.callback_query(
         (F.data == "4") |
         (F.data == "5") |
         (F.data == "6") |
@@ -148,16 +181,15 @@ START block Pyramid Haort
 )
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext):
     try:
-        await state.set_state(HaortGamesState.name)
-        # await state.set_data({"game_difficulty": int(callback_query.data)})
-        HaortGamesState.game_difficulty = int(callback_query.data)
+        await state.update_data(game_difficulty=int(callback_query.data))
         await _start_haort_game(callback_query, state, HaortGamesState)
     except Exception as err:
         print(err)
 
 
 @dp.message((F.text == mk.HAORT_GAME))
-async def choose_games_difficulty(message: Message):
+async def choose_games_difficulty(message: Message, state: FSMContext):
+    await state.set_state(HaortGamesState.start_game)
     buttons = [
         types.InlineKeyboardButton(
             text=str(number_difficulty), callback_data=str(number_difficulty),
@@ -166,18 +198,11 @@ async def choose_games_difficulty(message: Message):
     keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[buttons],
     )
-    await message.answer(
+    message = await message.answer(
         "Выберите сложность игры",
         reply_markup=keyboard,
     )
-# @dp.message((F.text == mk.HAORT_GAME))
-# async def start_haort_game(message: Message, state: FSMContext):
-#     await _start_haort_game(message, state, HaortGamesState)
-
-
-@dp.message(HaortGamesState.user_command)
-async def haort_game(message: types.Message, state: FSMContext):
-    await _start_haort_game(message, state)
+    message.delete()
 
 
 """
@@ -255,10 +280,7 @@ async def send_welcome(message: Message):
         create_user - создания юзера и занесения в базу данных.
     """
 
-    try:
-        await get_or_create_user(message)
-    except Exception as err:
-        print(err)
+    user = await get_or_create_user(message)
 
     button_1 = types.KeyboardButton(text=mk.CONVERT_WORD_IN_BINARY_CODE)
     button_2 = types.KeyboardButton(text=mk.CONVERT_BINARY_CODE_IN_WORD)
@@ -272,12 +294,13 @@ async def send_welcome(message: Message):
     )
 
     await message.answer(
-        text="Привет!\nХочешь увидеть, как выглядит любой символ, "
-        "или мб твоё имя в байтовом представлении?! - жми -> /byte\n"
+        text="Привет {}!\n"
+        "Хочешь увидеть, как выглядит любой символ, "
+        "или может быть твоё имя в байтовом представлении?!\n"
         "Если нужно конвертировать машинный код в слова или буквы, "
-        "то жми -> /transcript\n"
-        "А может сыграем в игру Угадай число? - жми -> /numbers_game\n"
-        "Или жми кнопки внизу 👇👇👇",
+        "то жми кнопку **{}**\n"
+        "А может сыграем в игру Угадай число?!\n"
+        "Выбирай игру, кнопки внизу 👇👇👇".format(user.first_name, mk.CONVERT_BINARY_CODE_IN_WORD),
         reply_markup=keyboard,
     )
 
@@ -299,3 +322,4 @@ if __name__ == "__main__":
         pass
     except Exception as err:
         logging.exception(f"Error. {err}")
+        print(err)

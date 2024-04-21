@@ -31,3 +31,16 @@ class ProfileInlineKeyboard:
     guess_game_profile: str = "профиль: Угадай число"
     converter_profile: str = "профиль: Конвертер"
     haort_game_profile: str = "профиль: Игра Хаорта"
+
+
+class HaortPyramidInlineKeyboard:
+    """Инлайн кнопки для перемещений пирамид.
+    Attributes:
+    - TOWER_1 = "Alpha"
+    - TOWER_2 = "Betta"
+    - TOWER_3 = "Gamma"
+    """
+
+    TOWER_1: str = "Alpha"
+    TOWER_2: str = "Betta"
+    TOWER_3: str = "Gamma"
