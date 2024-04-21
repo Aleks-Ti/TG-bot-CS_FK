@@ -169,15 +169,8 @@ async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query(
-        (F.data == "4") |
-        (F.data == "5") |
-        (F.data == "6") |
-        (F.data == "6") |
-        (F.data == "7") |
-        (F.data == "8") |
-        (F.data == "9") |
-        (F.data == "10") |
-        (F.data == "11"),
+        (F.data == "4") | (F.data == "5") | (F.data == "6") | (F.data == "6") | (F.data == "7") |
+        (F.data == "8") | (F.data == "9") | (F.data == "10") | (F.data == "11"),
 )
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext):
     try:
