@@ -15,7 +15,7 @@ class GameProfile(Base):
 
     guess_number = relationship("GuessNumber", back_populates="game_profile", uselist=False)
     binary_converter = relationship("BinaryConverter", back_populates="game_profile", uselist=False)
-    game_profile_haort_pyramid = relationship("GameProfileHaortPyramid", back_populates="game_profile", uselist=False)
+    haort_pyramid = relationship("HaortPyramid", back_populates="game_profile", uselist=False)
 
 
 class GuessNumber(Base):
@@ -44,23 +44,15 @@ class BinaryConverter(Base):
     game_profile = relationship("GameProfile", back_populates="binary_converter", uselist=False)
 
 
-class GameProfileHaortPyramid(Base):
-    __tablename__ = "game_profile_haort_pyramid"
-
-    id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, nullable=False, unique=True)
-    game_difficulty: Mapped[int] = mapped_column(sa.Integer, nullable=True, unique=False)
-    haort_pyramid_id: Mapped[int] = mapped_column(sa.ForeignKey("haort_pyramid.id"), nullable=False, unique=True)
-    game_profile_id: Mapped[int] = mapped_column(sa.ForeignKey("game_profile.id"), nullable=False, unique=True)
-
-    game_profile = relationship("GameProfile", back_populates="game_profile_haort_pyramid", uselist=False)
-    haort_pyramid = relationship("HaortPyramid", back_populates="game_profile_haort_pyramid", uselist=True)
-
-
 class HaortPyramid(Base):
     __tablename__ = "haort_pyramid"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, nullable=False, unique=True)
-    best_result: Mapped[int] = mapped_column(sa.Integer, nullable=True, unique=False)
+    game_difficulty: Mapped[int] = mapped_column(sa.Integer, nullable=False, unique=True)
+    best_result: Mapped[dict] = mapped_column(sa.JSON, nullable=True, unique=False)
+    total_number_permutations: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
     total_number_games: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
 
-    game_profile_haort_pyramid = relationship("GameProfileHaortPyramid", back_populates="haort_pyramid", uselist=True)
+    game_profile_id: Mapped[int] = mapped_column(sa.ForeignKey("game_profile.id"), nullable=False, unique=False)
+
+    game_profile = relationship("GameProfile", back_populates="haort_pyramid", uselist=False)

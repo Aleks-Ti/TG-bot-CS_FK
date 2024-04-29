@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 from PIL import Image, ImageDraw, ImageFont
 
-from src.state_machine import HaortGamesState
+from src.games.haort_query import update_or_create_haort_game
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 
 
@@ -36,6 +36,15 @@ class Stack:
                     ' the stack, that"s the rules of the game.',
                 )
             self.result.append(item)
+
+    def to_dict(self):
+        return {"result": self.result}
+
+    @staticmethod
+    def from_dict(data):
+        stack = Stack()
+        stack.result = data["result"]
+        return stack
 
 
 def builder_level_towers(disc: int, total_disc: int, count: int) -> str:
@@ -119,14 +128,14 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
         error_message = "В этой башне нет диска для перемещения. Выберите корректную комбинацию!\n"
         await state.update_data(step_1=None)
         await callback_query.message.edit_caption(reply_markup=keyboard)
-        await callback_query.message.answer(text=error_message, show_alert=True)
+        await callback_query.answer(text=error_message, show_alert=True)
         return
     except IncorrectMove:
         TowerStack[state_data["step_1"]].push(disck_from_to_tower)
         error_message = "Нельзя помещать больший диск на малый!\n"
         await state.update_data(step_1=None)
         await callback_query.message.edit_caption(reply_markup=keyboard)
-        await callback_query.message.answer(text=error_message, show_alert=True)
+        await callback_query.answer(text=error_message, show_alert=True)
         return
     await state.update_data(step_1=None)
 
@@ -135,18 +144,21 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
     await text_to_image(output_image_path, TowerStack, state_data["game_difficulty"])
     if await game_condition_check(TowerStack, complete_tower):
         await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
-        await callback_query.message.edit_caption(reply_markup=None)
-        await callback_query.message.answer(text="Ура! Это ПОБЕДА!")
+        [types.InlineKeyboardButton(text=hpik.TOWER_1, callback_data=hpik.TOWER_1)]
+        win_keyboard = types.InlineKeyboardMarkup(
+                inline_keyboard=[[types.InlineKeyboardButton(text="Ура! Это ПОБЕДА!", callback_data="Ура! Это ПОБЕДА!")]],
+            )
+        await callback_query.message.edit_caption(reply_markup=win_keyboard)
+        await callback_query.answer(text="Ура! Это ПОБЕДА!", show_alert=True)
+        await update_or_create_haort_game(callback_query, state)
+        #  NOTE вот тут добавить запрос в БД на сохранения результата игры
         await state.clear()
     else:
         await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
         await callback_query.message.edit_caption(reply_markup=keyboard)
 
 
-async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext, games_state: HaortGamesState) -> None:
-    """Запуск одной сессии игры 'Ханойски башни'."""
-    # await state.set_state(games_state.name)
-    # await state.set_state(games_state.game_difficulty)
+async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     state_data = await state.get_data()
     complete_tower = [x for x in range((state_data["game_difficulty"]), 0, -1)]
     towers = {
@@ -170,14 +182,13 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
             f" правильном порядке, чтобы победить!\n"
         )
     )
-    # message = show_towers(towers, state_data["game_difficulty"])
     start_message += (
             f"Переместите диск с одной башни на другую.\n"
             f"Пример команды: с {hpik.TOWER_1} на {hpik.TOWER_3} или с {hpik.TOWER_1} на {hpik.TOWER_2} или"
             f" с {hpik.TOWER_3} на {hpik.TOWER_2} и т.п.\n")
 
     await callback_query.message.answer(text=start_message)
-    output_image_path = "static/" + callback_query.message.from_user.first_name + "_hanoi_towers.png"
+    output_image_path = "static/" + str(callback_query.from_user.id) + "_hanoi_towers.png"
     await text_to_image(output_image_path, towers, state_data["game_difficulty"])
     button_1 = types.InlineKeyboardButton(text=hpik.TOWER_1, callback_data=hpik.TOWER_1)
     button_2 = types.InlineKeyboardButton(text=hpik.TOWER_2, callback_data=hpik.TOWER_2)

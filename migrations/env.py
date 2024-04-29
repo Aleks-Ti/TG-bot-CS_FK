@@ -13,7 +13,6 @@ from src.user.models import (   # noqa
 from src.games.models import (   # noqa
     GameProfile,
     HaortPyramid,
-    GameProfileHaortPyramid,
     BinaryConverter,
     GuessNumber,
 )

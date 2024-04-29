@@ -3,7 +3,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.orm import selectinload
 
 from src.core.database import async_session_maker
-from src.games.models import GameProfile, GameProfileHaortPyramid
+from src.games.models import GameProfile
 from src.user.models import User
 
 
@@ -45,8 +45,7 @@ async def get_profile_users(message: Message):
                 .options(
                     selectinload(GameProfile.binary_converter),
                     selectinload(GameProfile.guess_number),
-                    selectinload(GameProfile.game_profile_haort_pyramid),
-                    selectinload(GameProfile.game_profile_haort_pyramid, GameProfileHaortPyramid.haort_pyramid),
+                    selectinload(GameProfile.haort_pyramid),
                 )
             )
             res = await session.execute(stmt_game_profile)

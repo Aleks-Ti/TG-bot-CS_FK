@@ -17,7 +17,7 @@ from src.games.guess_number.guess_game import guess_number as _guess_number
 from src.games.guess_number.guess_game import info_game_number
 from src.games.haort_pyramid.haort_pyramid import active_haort_game as _active_haort_game
 from src.games.haort_pyramid.haort_pyramid import start_haort_game as _start_haort_game
-from src.state_machine import ByteInWordState, GuessGamesState, HaortGamesState, WordInByteState
+from src.state_machine import ByteInWordState, GuessGamesState, WordInByteState
 from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.buttons import MainKeyboard as mk
@@ -56,6 +56,8 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         print(err)
 
 
+# ===================================== SEPARATOR =========================================
+
 """
 ########################################
 START block convert WORD IN BINARY
@@ -82,6 +84,7 @@ END block convert WORD IN BINARY
 ########################################
 """
 
+# ===================================== SEPARATOR =========================================
 
 """
 ########################################
@@ -108,6 +111,7 @@ END block convert BINARY IN WORD
 ########################################
 """
 
+# ===================================== SEPARATOR =========================================
 
 """
 ########################################
@@ -130,6 +134,7 @@ END block GUESS GAME
 ########################################
 """
 
+# ===================================== SEPARATOR =========================================
 
 """
 ########################################
@@ -170,24 +175,23 @@ async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query(
         (F.data == "4") | (F.data == "5") | (F.data == "6") | (F.data == "6") | (F.data == "7") |
-        (F.data == "8") | (F.data == "9") | (F.data == "10") | (F.data == "11"),
+        (F.data == "8") | (F.data == "9") | (F.data == "10") | (F.data == "11") | (F.data == "3"),
 )
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext):
     try:
         await state.update_data(game_difficulty=int(callback_query.data))
         await state.update_data(number_of_permutations=0)
-        await _start_haort_game(callback_query, state, HaortGamesState)
+        await _start_haort_game(callback_query, state)
     except Exception as err:
         print(err)
 
 
 @dp.message((F.text == mk.HAORT_GAME))
 async def choose_games_difficulty(message: Message, state: FSMContext):
-    # await state.set_state(HaortGamesState.start_game)
     buttons = [
         types.InlineKeyboardButton(
             text=str(number_difficulty), callback_data=str(number_difficulty),
-        ) for number_difficulty in range(4, 12)
+        ) for number_difficulty in range(3, 12)
     ]
     keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[buttons],
@@ -196,7 +200,7 @@ async def choose_games_difficulty(message: Message, state: FSMContext):
         "Выберите сложность игры",
         reply_markup=keyboard,
     )
-    message.delete()
+    # message.delete()
 
 
 """
@@ -243,7 +247,7 @@ async def converter_profile(callback_query: types.CallbackQuery):
 async def haort_game_profile(callback_query: types.CallbackQuery):
     get_profile = await get_profile_users(callback_query)
     answer = "#" * 3 + "Пирамида Хаорта\n"
-    if gphp := get_profile.game_profile_haort_pyramid:
+    if gphp := get_profile.haort_pyramid:  # NOTE доделать
         answer += f"Лучший результат: &lt; {gphp.best_result} &gt;\n"
         answer += f"Общее количество попыток: &lt; {gphp.total_number_games} &gt;\n"
     else:

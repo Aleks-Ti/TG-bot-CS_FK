@@ -1,41 +1,90 @@
+import json
+
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import selectinload
 
 from src.core.database import async_session_maker
-from src.games.models import GameProfile, GuessNumber
+from src.games.models import HaortPyramid
 from src.user.models import User
 from src.user.user_query import get_or_create_user
 
 
-async def guess_game_update(message: Message, count_attempts):
+async def get_dict_and_encode_values_stack(state_dict: dict):
+    result = {}
+    for key, value in state_dict.items():
+        result[key] = json.loads(state_dict[value])
+    return result
+
+
+async def get_dict_and_decode_values_stack(state_dict: dict):
+    result = {}
+    for key, value in state_dict.items():
+        result[key] = json.loads(state_dict[value])
+    return result
+
+
+async def update_or_create_haort_game(message: Message, state: FSMContext) -> None:
+    state_game = await state.get_data()
+    game_difficulty: int = state_game["game_difficulty"]
+    count_permutations: int = state_game["number_of_permutations"]
+    state_of_play: dict = state_game["towers_condition"]
+    state_of_play_json = json.dumps({key: value.to_dict() for key, value in state_of_play.items()})
+    user: User = await get_or_create_user(message)
     async with async_session_maker() as session:
         try:
-            user: User = await get_or_create_user(message)
-            stmt_guess_number = (
-                select(GuessNumber)
-                .options(
-                    selectinload(GuessNumber.game_profile),
-                    selectinload(GuessNumber.game_profile, GameProfile.user),
+            stmt_haort_game = (
+                select(HaortPyramid)
+                .options(selectinload(HaortPyramid.game_profile))
+                .where(
+                    HaortPyramid.game_profile_id == user.game_profile.id,
+                    HaortPyramid.game_difficulty == game_difficulty,
                 )
-                .where(GameProfile.user_id == user.id)
             )
-            res_guess_number = (await session.execute(stmt_guess_number)).scalar_one_or_none()
-            if res_guess_number:
-                new_result = {"total_number_games": GuessNumber.total_number_games + 1}
-                if res_guess_number.best_result > count_attempts:
-                    new_result["best_result"] = count_attempts
-                stmt = update(GuessNumber).where(GuessNumber.game_profile_id == user.game_profile.id).values(**new_result)
+            haort_game = (await session.execute(stmt_haort_game)).scalar_one_or_none()
+            if haort_game is None:
+                new_haort_game = (
+                    insert(HaortPyramid)
+                    .values(
+                        {
+                            "game_difficulty": game_difficulty,
+                            "game_profile_id": user.game_profile.id,
+                            "best_result": state_of_play_json,
+                            "total_number_permutations": count_permutations,
+                            "total_number_games": 1,
+                        },
+                    )
+                )
+                await session.execute(new_haort_game)
+                await session.commit()
+            elif haort_game.total_number_permutations > count_permutations:
+                stmt = (
+                    update(HaortPyramid)
+                    .where(HaortPyramid.id == haort_game.id)
+                    .values(
+                        {
+                            "best_result": state_of_play_json,
+                            "total_number_permutations": count_permutations,
+                            "total_number_games": HaortPyramid.total_number_games + 1,
+                        },
+                    )
+                )
                 await session.execute(stmt)
                 await session.commit()
             else:
-                game_result = {
-                    "total_number_games": 1,
-                    "best_result": count_attempts,
-                    "game_profile_id": user.game_profile.id,
-                }
-                stmt = insert(GuessNumber).values(**game_result)
+                stmt = (
+                    update(HaortPyramid)
+                    .where(HaortPyramid.id == haort_game.id)
+                    .values(
+                        {
+                            "total_number_games": HaortPyramid.total_number_games + 1,
+                        },
+                    )
+                )
                 await session.execute(stmt)
                 await session.commit()
+                return None
+
         except Exception as err:
             print(err)
