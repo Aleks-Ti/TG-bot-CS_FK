@@ -189,12 +189,30 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
 @dp.message((F.text == mk.HAORT_GAME))
 async def choose_games_difficulty(message: Message, state: FSMContext):
     buttons = [
-        types.InlineKeyboardButton(
-            text=str(number_difficulty), callback_data=str(number_difficulty),
-        ) for number_difficulty in range(3, 12)
+        [
+            types.InlineKeyboardButton(
+                text=str(number_difficulty),
+                callback_data=str(number_difficulty),
+            )
+            for number_difficulty in range(3, 6)
+        ],
+        [
+            types.InlineKeyboardButton(
+                text=str(number_difficulty),
+                callback_data=str(number_difficulty),
+            )
+            for number_difficulty in range(6, 9)
+        ],
+        [
+            types.InlineKeyboardButton(
+                text=str(number_difficulty),
+                callback_data=str(number_difficulty),
+            )
+            for number_difficulty in range(9, 12)
+        ],
     ]
     keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=[buttons],
+        inline_keyboard=buttons,
     )
     message = await message.answer(
         "Выберите сложность игры",

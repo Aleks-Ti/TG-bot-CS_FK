@@ -103,16 +103,21 @@ async def game_condition_check(
 
 
 async def text_to_image(image_path, towers, game_difficulty):
-    line_height = 15
-    image = Image.new("RGB", (450, 200), color=(255, 255, 255))
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.load_default()
-    y_text = 10
-    for line in show_towers(towers, game_difficulty):
-        draw.text((10, y_text), line, font=font, fill=(0, 0, 0))
-        y_text += line_height
-    image.save(image_path)
-    return image
+    try:
+        line_height = 15
+        image = Image.new("RGB", (470, 200), color=(255, 255, 255))
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.load_default(size=11.0)
+        y_text = 10
+        for line in show_towers(towers, game_difficulty):
+            _, _, text_w, _ = font.getbbox(line)
+            x_text = ((image.width - text_w) // 2)  # Положение текста по оси X к центру
+            draw.text((x_text, y_text), line, font=font, fill=(0, 0, 0))
+            y_text += line_height
+        image.save(image_path)
+        return image
+    except Exception as err:
+        print(err)
 
 
 def get_image(image_path):
@@ -162,7 +167,12 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
                 inline_keyboard=[[types.InlineKeyboardButton(text="Ура! Это ПОБЕДА!", callback_data="Ура! Это ПОБЕДА!")]],
             )
         await callback_query.message.edit_caption(reply_markup=win_keyboard)
-        await callback_query.answer(text="Ура! Это ПОБЕДА!", show_alert=True)
+        await callback_query.answer(
+            text=f"Ура! Это ПОБЕДА!\nКоличество перестановок за игру"
+                 f": {state_data["number_of_permutations"]}.\n"
+                 f"Вы всегда можете посмотреть результат игры в профиле в главном меню!",
+            show_alert=True,
+        )
         await update_or_create_haort_game(callback_query, state)
         await state.clear()
         delete_image_in_system(output_image_path)
