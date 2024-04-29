@@ -1,9 +1,11 @@
+import json
+
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 from PIL import Image, ImageDraw, ImageFont
 
-from src.games.haort_query import update_or_create_haort_game
+from src.games.haort_query import get_win_game_by_difficulty, update_or_create_haort_game
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.delete_image import delete_image_in_system
 
@@ -48,7 +50,7 @@ class Stack:
         return stack
 
 
-def builder_level_towers(disc: int, total_disc: int, count: int) -> str:
+def builder_level_towers(disc: int, total_disc: int) -> str:
     """Генерирует горизонтальный уровень башни."""
 
     result = ""
@@ -65,7 +67,7 @@ def builder_level_towers(disc: int, total_disc: int, count: int) -> str:
 
 
 def show_towers(towers: dict[str, Stack], total_disc: int):
-    """Выводит в терминал отображение Ханойских башен.
+    """Собрщик уровней башни, сверху вниз.
 
     - tower_a, tower_b, tower_c - Полное копирование списка дисков башен \
         из экземпляров класса Stack хранящегося по ключу в словаре 'towers',\
@@ -79,9 +81,9 @@ def show_towers(towers: dict[str, Stack], total_disc: int):
     count = 0
     result = ""
     while not count > total_disc:
-        result += builder_level_towers(tower_a[count], total_disc, count)
-        result += builder_level_towers(tower_b[count], total_disc, count)
-        result += builder_level_towers(tower_c[count], total_disc, count) + "\n"
+        result += builder_level_towers(tower_a[count], total_disc)
+        result += builder_level_towers(tower_b[count], total_disc)
+        result += builder_level_towers(tower_c[count], total_disc) + "\n"
         count += 1
         yield result
         result = ""
@@ -117,6 +119,18 @@ def get_image(image_path):
     return FSInputFile(image_path, filename="Снеговик")
 
 
+async def show_image_by_game_difficulty_in_profile_user(callback_query: types.CallbackQuery, game_difficulty: int):
+    requested_game = await get_win_game_by_difficulty(callback_query, game_difficulty)
+    output_image_path = "static/" + str(callback_query.from_user.id) + "_show_hanoi_towers.png"
+
+    state_of_play_data: dict = json.loads(requested_game.best_result)
+    towers = {key: Stack.from_dict(value) for key, value in state_of_play_data.items()}
+
+    await text_to_image(output_image_path, towers, game_difficulty)
+
+    return output_image_path
+
+
 async def active_haort_game(callback_query: types.CallbackQuery, state: FSMContext, keyboard) -> None:
     state_data = await state.get_data()
     complete_tower = [x for x in range((state_data["game_difficulty"]), 0, -1)]
@@ -141,18 +155,15 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
     await state.update_data(step_1=None)
 
     output_image_path = "static/" + str(callback_query.from_user.id) + "_hanoi_towers.png"
-    # message_towers = show_towers(TowerStack, state_data["game_difficulty"])
     await text_to_image(output_image_path, TowerStack, state_data["game_difficulty"])
     if await game_condition_check(TowerStack, complete_tower):
         await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
-        [types.InlineKeyboardButton(text=hpik.TOWER_1, callback_data=hpik.TOWER_1)]
         win_keyboard = types.InlineKeyboardMarkup(
                 inline_keyboard=[[types.InlineKeyboardButton(text="Ура! Это ПОБЕДА!", callback_data="Ура! Это ПОБЕДА!")]],
             )
         await callback_query.message.edit_caption(reply_markup=win_keyboard)
         await callback_query.answer(text="Ура! Это ПОБЕДА!", show_alert=True)
         await update_or_create_haort_game(callback_query, state)
-        #  NOTE вот тут добавить запрос в БД на сохранения результата игры
         await state.clear()
         delete_image_in_system(output_image_path)
     else:

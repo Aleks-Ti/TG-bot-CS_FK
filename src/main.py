@@ -16,15 +16,14 @@ from src.games.binary_converter.converter import transcript_word as _transcript_
 from src.games.guess_number.guess_game import guess_number as _guess_number
 from src.games.guess_number.guess_game import info_game_number
 from src.games.haort_pyramid.haort_pyramid import active_haort_game as _active_haort_game
+from src.games.haort_pyramid.haort_pyramid import get_image, show_image_by_game_difficulty_in_profile_user
 from src.games.haort_pyramid.haort_pyramid import start_haort_game as _start_haort_game
+from src.games.models import HaortPyramid, BinaryConverter
 from src.state_machine import ByteInWordState, GuessGamesState, WordInByteState
 from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.buttons import MainKeyboard as mk
 from src.utils.buttons import ProfileInlineKeyboard as pic
-from src.games.models import HaortPyramid
-from src.games.haort_pyramid.haort_pyramid import get_image, text_to_image
-
 
 load_dotenv()
 
@@ -95,7 +94,6 @@ START block convert BINARY IN WORD
 """
 
 
-# NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
 @dp.message((F.text == mk.CONVERT_BINARY_CODE_IN_WORD))
 async def start_transcript(message: Message, state: FSMContext):
     """Пользовательский ввод и состояние для дешифрации."""
@@ -103,7 +101,6 @@ async def start_transcript(message: Message, state: FSMContext):
     await message.answer("Введите двоичный код 📟 для дешифрации___ ")
 
 
-# NOTE Нужно добавить кол-во символов которое перебиралось и кол-во запросов, а еще в БД записывать все это
 @dp.message(ByteInWordState.name)
 async def transcript_byte(message: types.Message, state: FSMContext):
     await _transcript_byte(message, state)
@@ -177,8 +174,8 @@ async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query(
-        (F.data == "4") | (F.data == "5") | (F.data == "6") | (F.data == "6") | (F.data == "7") |
-        (F.data == "8") | (F.data == "9") | (F.data == "10") | (F.data == "11") | (F.data == "3"),
+        (F.data == "4") | (F.data == "5") | (F.data == "6") | (F.data == "3") | (F.data == "7") |
+        (F.data == "8") | (F.data == "9") | (F.data == "10") | (F.data == "11"),
 )
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext):
     try:
@@ -217,11 +214,12 @@ async def guess_game_profile(callback_query: types.CallbackQuery):
     get_profile = await get_profile_users(callback_query)
     answer = "#" * 3 + "Угадай Число!\n"
     if guess_number := get_profile.guess_number:
-        answer += f"Лучший результат: &lt; {guess_number.best_result} &gt;\n "
-        answer += f"Общее количество попыток: &lt; {guess_number.total_number_games} &gt;\n"
+        answer += f"Лучший результат: &lt; {guess_number.best_result} &gt;\n"
+        answer += f"\nОбщее количество попыток: &lt; {guess_number.total_number_games} &gt;\n"
     else:
-        answer += " Нет результатов\n"
-    await callback_query.message.answer(text=answer)
+        answer += "   Нет результатов\nМожет пора сыграть? (V)O_o(V)"
+    message = "<pre>" + answer + "</pre>"
+    await callback_query.message.answer(text=message)
 
 
 @dp.callback_query(F.data == pic.converter_profile)
@@ -229,19 +227,37 @@ async def converter_profile(callback_query: types.CallbackQuery):
     try:
         get_profile = await get_profile_users(callback_query)
         answer = "#" * 3 + "Конвертер\n"
-        if binary_converter := get_profile.binary_converter:
+        binary_converter: BinaryConverter = get_profile.binary_converter
+        if binary_converter:
             answer += " * Конвертирований слов в двоичное представление:\n"
-            answer += f"  --  Общее количество попыток: &lt; {binary_converter.total_try_convert_word_in_byte} &gt;\n"
-            answer += f"  --  Количество слов: &lt; {binary_converter.count_encrypted_word} &gt;\n"
-            answer += f"  --  Итоговое количство символов: &lt; {binary_converter.count_encrypted_characters} &gt;\n"
-
+            answer += f"  --  Общее количество попыток кодирования: &lt; {binary_converter.total_try_convert_word_in_byte} &gt;\n"
+            answer += f"  --  Количество слов переданных на расшифровку: &lt; {binary_converter.count_encrypted_word} &gt;\n"
+            answer += (
+                f"  --  Итоговое количество символов переданных на расшифровку"
+                f": &lt; {binary_converter.count_encrypted_characters} &gt;\n"
+            )
             answer += " * Конвертирований двоичного кода в символы:\n"
-            answer += f"  --  Общее количество попыток: &lt; {binary_converter.total_try_convert_byte_in_word} &gt;\n"
-            answer += f"  --  Количество символов представленных в двоичном коде: &lt; {binary_converter.number_decoded_word} &gt;\n"
+            answer += f"  --  Общее количество попыток декодирования: &lt; {binary_converter.total_try_convert_byte_in_word} &gt;\n"
+            answer += f"  --  Количество блоков символов представленных в двоичном коде: &lt; {binary_converter.number_decoded_word} &gt;\n"
             answer += f"  --  Общее количество переданных нулей и единиц: &lt; {binary_converter.number_decoded_characters} &gt;\n"
         else:
-            answer += " Нет результатов\n"
-        await callback_query.message.answer(text=answer)
+            answer += "   Нет результатов\nМожет пора сыграть? (V)O_o(V)"
+        message = "<pre>" + answer + "</pre>"
+        await callback_query.message.answer(text=message)
+    except Exception as err:
+        print(err)
+
+
+@dp.callback_query(
+        (F.data == "-4-") | (F.data == "-5-") | (F.data == "-6-") | (F.data == "-3-") | (F.data == "-7-") |
+        (F.data == "-8-") | (F.data == "-9-") | (F.data == "-10-") | (F.data == "-11-"),
+)
+async def show_best_game(callback_query: types.CallbackQuery):
+    try:
+        game_difficulty = int(callback_query.data.replace("-", ""))
+        path_image = await show_image_by_game_difficulty_in_profile_user(callback_query, game_difficulty)
+        await callback_query.message.answer_photo(get_image(path_image))
+        os.remove(path_image)
     except Exception as err:
         print(err)
 
@@ -251,15 +267,31 @@ async def haort_game_profile(callback_query: types.CallbackQuery):
     get_profile = await get_profile_users(callback_query)
     answer = "#" * 3 + "Пирамида Хаорта\n"
     haort_pyramid: list[HaortPyramid] = get_profile.haort_pyramid
-    if haort_pyramid:  # NOTE доделать, с отображение картинки лучшего результата
-        for game in haort_pyramid:
+    haort_pyramid_sort = sorted(haort_pyramid, key=lambda game: game.game_difficulty)
+    difficulty_games_user_has_played = [x.game_difficulty for x in haort_pyramid_sort]
+    if haort_pyramid:
+        for game in haort_pyramid_sort:
             answer += f"Сложность игры: &lt; {game.game_difficulty} &gt;\n"
             answer += f"    Лучшее количество перестановок: &lt; {game.total_number_permutations} &gt;\n"
             answer += f"    Всего сыграно на данной сложности: &lt; {game.total_number_games} &gt;\n"
+        buttons = [
+            types.InlineKeyboardButton(
+                text=str(number_difficulty), callback_data="-" + str(number_difficulty) + "-",
+            ) for number_difficulty in difficulty_games_user_has_played
+            ]
+        keyboard = types.InlineKeyboardMarkup(
+            inline_keyboard=[buttons],
+        )
     else:
-        answer += " Нет результатов\n"
+        answer += "   Нет результатов\nМожет пора сыграть? (V)O_o(V)"
+        keyboard = None
     message = "<pre>" + answer + "</pre>"
     await callback_query.message.answer(text=message)
+    if keyboard:
+        await callback_query.message.answer(
+            text="Можете посмотреть финальный ход лучшей игры.\nВыберете сложность игры, которую хотите глянуть.",
+            reply_markup=keyboard,
+        )
 
 
 @dp.message((F.text == mk.ME_PROFILE))
@@ -303,7 +335,7 @@ async def send_welcome(message: Message):
         "Хочешь увидеть, как выглядит любой символ, "
         "или может быть твоё имя в байтовом представлении?!\n"
         "Если нужно конвертировать машинный код в слова или буквы, "
-        "то жми кнопку **{}**\n"
+        "то жми кнопку внизу **{}**\n"
         "А может сыграем в игру Угадай число?!\n"
         "Выбирай игру, кнопки внизу 👇👇👇".format(user.first_name, mk.CONVERT_BINARY_CODE_IN_WORD),
         reply_markup=keyboard,

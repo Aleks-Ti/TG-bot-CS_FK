@@ -35,7 +35,7 @@ async def get_or_create_user(message: Message) -> User:
             return user.scalar_one()
 
 
-async def get_profile_users(message: Message):
+async def get_profile_users(message: Message) -> GameProfile:
     try:
         async with async_session_maker() as session:
             res_user = await get_or_create_user(message)

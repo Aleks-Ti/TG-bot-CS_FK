@@ -48,7 +48,7 @@ async def binary_in_word_update(message: Message):
     async with async_session_maker() as session:
         try:
             user: User = await get_or_create_user(message)
-            stmt_guess_number = (
+            stmt_bynary_converter = (
                 select(BinaryConverter)
                 .options(
                     selectinload(BinaryConverter.game_profile),
@@ -56,8 +56,8 @@ async def binary_in_word_update(message: Message):
                 )
                 .where(GameProfile.user_id == user.id)
             )
-            res_guess_number = (await session.execute(stmt_guess_number)).scalar_one_or_none()
-            if res_guess_number:
+            stmt_bynary = (await session.execute(stmt_bynary_converter)).scalar_one_or_none()
+            if stmt_bynary:
                 new_result = {
                     "total_try_convert_byte_in_word": BinaryConverter.total_try_convert_word_in_byte + 1,
                     "number_decoded_word": BinaryConverter.count_encrypted_word + len(message.text.split(" ")),

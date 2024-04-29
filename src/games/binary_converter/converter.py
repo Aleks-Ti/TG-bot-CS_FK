@@ -51,6 +51,7 @@ async def transcript_word(message: types.Message, state: FSMContext):
     """Отправка сообщения с данными конвертированными в байт код."""
     try:
         await state.clear()
+        await word_in_binary_update(message)
         messages = await word_convert_in_binary(message.text)
         await message.answer(
             text="Происходит запрос 📡 на главные сервера планеты 📟📟📟",

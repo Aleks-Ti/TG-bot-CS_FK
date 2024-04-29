@@ -6,7 +6,7 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.orm import selectinload
 
 from src.core.database import async_session_maker
-from src.games.models import HaortPyramid
+from src.games.models import GameProfile, HaortPyramid
 from src.user.models import User
 from src.user.user_query import get_or_create_user
 
@@ -85,6 +85,25 @@ async def update_or_create_haort_game(message: Message, state: FSMContext) -> No
                 await session.execute(stmt)
                 await session.commit()
                 return None
+
+        except Exception as err:
+            print(err)
+
+
+async def get_win_game_by_difficulty(message: Message, game_difficulty: int) -> HaortPyramid:
+    user: User = await get_or_create_user(message)
+    async with async_session_maker() as session:
+        try:
+            subquery = select(GameProfile.id).where(GameProfile.user_id == user.id).scalar_subquery()
+            stmt = (
+                select(HaortPyramid)
+                .where(
+                    HaortPyramid.game_profile_id == subquery,
+                    HaortPyramid.game_difficulty == game_difficulty,
+                )
+            )
+            res = await session.execute(stmt)
+            return res.scalar_one()
 
         except Exception as err:
             print(err)
