@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src.games.haort_query import update_or_create_haort_game
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
+from src.utils.delete_image import delete_image_in_system
 
 
 class StackIsEmptyError(Exception):
@@ -63,7 +64,7 @@ def builder_level_towers(disc: int, total_disc: int, count: int) -> str:
     return result
 
 
-def show_towers(towers: dict[str, Stack], total_disc: int) -> None:
+def show_towers(towers: dict[str, Stack], total_disc: int):
     """Выводит в терминал отображение Ханойских башен.
 
     - tower_a, tower_b, tower_c - Полное копирование списка дисков башен \
@@ -139,7 +140,7 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
         return
     await state.update_data(step_1=None)
 
-    output_image_path = "static/" + callback_query.message.from_user.first_name + "_hanoi_towers.png"
+    output_image_path = "static/" + str(callback_query.from_user.id) + "_hanoi_towers.png"
     # message_towers = show_towers(TowerStack, state_data["game_difficulty"])
     await text_to_image(output_image_path, TowerStack, state_data["game_difficulty"])
     if await game_condition_check(TowerStack, complete_tower):
@@ -153,6 +154,7 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
         await update_or_create_haort_game(callback_query, state)
         #  NOTE вот тут добавить запрос в БД на сохранения результата игры
         await state.clear()
+        delete_image_in_system(output_image_path)
     else:
         await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
         await callback_query.message.edit_caption(reply_markup=keyboard)

@@ -15,7 +15,7 @@ class GameProfile(Base):
 
     guess_number = relationship("GuessNumber", back_populates="game_profile", uselist=False)
     binary_converter = relationship("BinaryConverter", back_populates="game_profile", uselist=False)
-    haort_pyramid = relationship("HaortPyramid", back_populates="game_profile", uselist=False)
+    haort_pyramid = relationship("HaortPyramid", back_populates="game_profile", uselist=True)
 
 
 class GuessNumber(Base):

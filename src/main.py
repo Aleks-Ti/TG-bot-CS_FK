@@ -22,6 +22,9 @@ from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.buttons import MainKeyboard as mk
 from src.utils.buttons import ProfileInlineKeyboard as pic
+from src.games.models import HaortPyramid
+from src.games.haort_pyramid.haort_pyramid import get_image, text_to_image
+
 
 load_dotenv()
 
@@ -247,12 +250,16 @@ async def converter_profile(callback_query: types.CallbackQuery):
 async def haort_game_profile(callback_query: types.CallbackQuery):
     get_profile = await get_profile_users(callback_query)
     answer = "#" * 3 + "Пирамида Хаорта\n"
-    if gphp := get_profile.haort_pyramid:  # NOTE доделать
-        answer += f"Лучший результат: &lt; {gphp.best_result} &gt;\n"
-        answer += f"Общее количество попыток: &lt; {gphp.total_number_games} &gt;\n"
+    haort_pyramid: list[HaortPyramid] = get_profile.haort_pyramid
+    if haort_pyramid:  # NOTE доделать, с отображение картинки лучшего результата
+        for game in haort_pyramid:
+            answer += f"Сложность игры: &lt; {game.game_difficulty} &gt;\n"
+            answer += f"    Лучшее количество перестановок: &lt; {game.total_number_permutations} &gt;\n"
+            answer += f"    Всего сыграно на данной сложности: &lt; {game.total_number_games} &gt;\n"
     else:
         answer += " Нет результатов\n"
-    await callback_query.message.answer(text=answer)
+    message = "<pre>" + answer + "</pre>"
+    await callback_query.message.answer(text=message)
 
 
 @dp.message((F.text == mk.ME_PROFILE))
