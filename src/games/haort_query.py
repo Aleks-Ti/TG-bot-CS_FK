@@ -1,4 +1,5 @@
 import json
+import logging
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -87,7 +88,7 @@ async def update_or_create_haort_game(message: Message, state: FSMContext) -> No
                 return None
 
         except Exception as err:
-            print(err)
+             logging.exception(f"Error. {err}")
 
 
 async def get_win_game_by_difficulty(message: Message, game_difficulty: int) -> HaortPyramid:
@@ -106,4 +107,4 @@ async def get_win_game_by_difficulty(message: Message, game_difficulty: int) -> 
             return res.scalar_one()
 
         except Exception as err:
-            print(err)
+            logging.exception(f"Error. {err}")

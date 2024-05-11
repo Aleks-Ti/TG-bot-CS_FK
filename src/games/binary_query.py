@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.types import Message
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import selectinload
@@ -41,7 +43,7 @@ async def word_in_binary_update(message: Message):
                 await session.execute(stmt)
                 await session.commit()
         except Exception as err:
-            print(err)
+            logging.exception(f"Error. {err}")
 
 
 async def binary_in_word_update(message: Message):
@@ -77,4 +79,4 @@ async def binary_in_word_update(message: Message):
                 await session.execute(stmt)
                 await session.commit()
         except Exception as err:
-            print(err)
+            logging.exception(f"Error. {err}")

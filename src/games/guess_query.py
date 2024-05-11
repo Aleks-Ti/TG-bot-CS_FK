@@ -38,4 +38,4 @@ async def guess_game_update(message: Message, count_attempts):
                 await session.execute(stmt)
                 await session.commit()
         except Exception as err:
-            print(err)
+            logging.exception(f"Error. {err}")

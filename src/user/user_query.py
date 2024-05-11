@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.types import Message
 from sqlalchemy import insert, select
 from sqlalchemy.orm import selectinload
@@ -51,4 +53,4 @@ async def get_profile_users(message: Message) -> GameProfile:
             res = await session.execute(stmt_game_profile)
             return res.scalar_one()
     except Exception as err:
-        print(err)
+        logging.exception(f"Error. {err}")

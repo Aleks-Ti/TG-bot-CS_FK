@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 import sys
-from os import getenv
 
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.enums import ParseMode
@@ -11,6 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from dotenv import load_dotenv
 
+from src.core.exeptions import TranscriptWordExeption
 from src.games.binary_converter.converter import transcript_byte as _transcript_byte
 from src.games.binary_converter.converter import transcript_word as _transcript_word
 from src.games.guess_number.guess_game import guess_number as _guess_number
@@ -18,7 +18,7 @@ from src.games.guess_number.guess_game import info_game_number
 from src.games.haort_pyramid.haort_pyramid import active_haort_game as _active_haort_game
 from src.games.haort_pyramid.haort_pyramid import get_image, show_image_by_game_difficulty_in_profile_user
 from src.games.haort_pyramid.haort_pyramid import start_haort_game as _start_haort_game
-from src.games.models import HaortPyramid, BinaryConverter
+from src.games.models import BinaryConverter, HaortPyramid
 from src.state_machine import ByteInWordState, GuessGamesState, WordInByteState
 from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
@@ -29,15 +29,21 @@ load_dotenv()
 
 logging.basicConfig(
     format="%(asctime)s - %(funcName)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=logging.ERROR,
     filename=os.path.join(os.path.dirname(__file__), "program.log"),
     encoding="utf-8",
 )
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.ERROR)
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(funcName)s - %(levelname)s - %(message)s"))
+
+# Добавление обработчика к корневому логгеру
+logging.getLogger().addHandler(console_handler)
 
 dp = Dispatcher()
 
-TELEGRAM_TOKEN = getenv("TOKEN")
-TELEGRAM_CHAT_ID = getenv("CHAT_ID")
+TELEGRAM_TOKEN = os.getenv("TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("CHAT_ID")
 
 RETRY_PERIOD = 10  # Период обращения
 
@@ -55,14 +61,15 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         else:
             await message.answer("Нет активных операций для отмены.")
     except Exception as err:
-        print(err)
+        logging.exception(f"Error: command cancel - {err}")
 
 
 # ===================================== SEPARATOR =========================================
 
 """
-########################################
+################################################
 START block convert WORD IN BINARY
+################################
 """
 
 
@@ -78,19 +85,24 @@ async def byte_message(message: Message, state: FSMContext):
 
 @dp.message(WordInByteState.name)
 async def transcript_word(message: types.Message, state: FSMContext):
-    await _transcript_word(message, state)
+    try:
+        await _transcript_word(message, state)
+    except Exception as err:
+        logging.exception(f"Error: failed to convert the word to a binary representation! Reason: {err}")
 
 
 """
+################################
 END block convert WORD IN BINARY
-########################################
+################################################
 """
 
 # ===================================== SEPARATOR =========================================
 
 """
-########################################
+################################################
 START block convert BINARY IN WORD
+################################
 """
 
 
@@ -103,42 +115,53 @@ async def start_transcript(message: Message, state: FSMContext):
 
 @dp.message(ByteInWordState.name)
 async def transcript_byte(message: types.Message, state: FSMContext):
-    await _transcript_byte(message, state)
-
+    try:
+        await _transcript_byte(message, state)
+    except Exception as err:
+        logging.exception(f"Error in transcribing binary representation! Reason: {err}")
 
 """
+################################
 END block convert BINARY IN WORD
-########################################
+################################################
 """
 
 # ===================================== SEPARATOR =========================================
 
 """
-########################################
+################################################
 START block GUESS GAME
+################################
 """
 
 
 @dp.message((F.text == mk.GAMES_GUESS_NUMBER))
 async def start_guess_game(message: Message, state: FSMContext):
-    await info_game_number(message, state, GuessGamesState)
+    try:
+        await info_game_number(message, state, GuessGamesState)
+    except Exception as err:
+        logging.exception(f"Error start info message in guess game! Reason: {err}")
 
 
 @dp.message(GuessGamesState.name)
 async def guess_number(message: types.Message, state: FSMContext):
-    await _guess_number(message, state)
-
+    try:
+        await _guess_number(message, state)
+    except Exception as err:
+        logging.exception(f"Error in guess game! Reason: {err}")
 
 """
+################################
 END block GUESS GAME
-########################################
+################################################
 """
 
 # ===================================== SEPARATOR =========================================
 
 """
-########################################
+################################################
 START block Pyramid Haort
+################################
 """
 
 
@@ -156,7 +179,9 @@ async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
         }
         state_data = await state.get_data()
         if state_data.get("step_1", None) is None:
-            buttons.pop(callback_query.data)
+            buttons[callback_query.data] = types.InlineKeyboardButton(
+                text="👉 " + callback_query.data, callback_data="👉 " + callback_query.data,
+            )
             new_buttons = [x for x in buttons.values()]
             keyboard = types.InlineKeyboardMarkup(
                 inline_keyboard=[new_buttons],
@@ -170,7 +195,7 @@ async def haort_game(callback_query: types.CallbackQuery, state: FSMContext):
             )
             await _active_haort_game(callback_query, state, keyboard)
     except Exception as err:
-        print(err)
+        logging.exception(f"Error. {err}")
 
 
 @dp.callback_query(
@@ -183,7 +208,7 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
         await state.update_data(number_of_permutations=0)
         await _start_haort_game(callback_query, state)
     except Exception as err:
-        print(err)
+        logging.exception(f"Error. {err}")
 
 
 @dp.message((F.text == mk.HAORT_GAME))
@@ -222,8 +247,9 @@ async def choose_games_difficulty(message: Message, state: FSMContext):
 
 
 """
+################################
 END block Pyramid Haort
-########################################
+################################################
 """
 
 
@@ -263,7 +289,7 @@ async def converter_profile(callback_query: types.CallbackQuery):
         message = "<pre>" + answer + "</pre>"
         await callback_query.message.answer(text=message)
     except Exception as err:
-        print(err)
+        logging.exception(f"Error. {err}")
 
 
 @dp.callback_query(
@@ -277,7 +303,7 @@ async def show_best_game(callback_query: types.CallbackQuery):
         await callback_query.message.answer_photo(get_image(path_image))
         os.remove(path_image)
     except Exception as err:
-        print(err)
+        logging.exception(f"Error. {err}")
 
 
 @dp.callback_query(F.data == pic.haort_game_profile)
@@ -365,16 +391,14 @@ async def main() -> None:
         bot = Bot(TELEGRAM_TOKEN, parse_mode=ParseMode.HTML)
         await dp.start_polling(bot)
     except Exception as err:
-        print(err)
-        logging.exception(f"Error: {err}")
+        logging.exception(f"Error. {err}")
+
 
 if __name__ == "__main__":
     try:
-        print("поехали")
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
         asyncio.run(main())
     except KeyboardInterrupt:
         pass
     except Exception as err:
         logging.exception(f"Error. {err}")
-        print(err)

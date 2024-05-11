@@ -1,4 +1,5 @@
 import json
+import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
@@ -117,7 +118,7 @@ async def text_to_image(image_path, towers, game_difficulty):
         image.save(image_path)
         return image
     except Exception as err:
-        print(err)
+        logging.exception(f"Error. {err}")
 
 
 def get_image(image_path):
