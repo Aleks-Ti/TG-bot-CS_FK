@@ -18,8 +18,9 @@ async def word_in_binary_update(message: Message):
                 select(BinaryConverter)
                 .options(
                     selectinload(BinaryConverter.game_profile),
-                    selectinload(BinaryConverter.game_profile, GameProfile.user),
+                    selectinload(BinaryConverter.game_profile, GameProfile.binary_converter),
                 )
+                .join(GameProfile,  GameProfile.id == BinaryConverter.game_profile_id, isouter=True)
                 .where(GameProfile.user_id == user.id)
             )
             res_guess_number = (await session.execute(stmt_guess_number)).scalar_one_or_none()
@@ -54,8 +55,9 @@ async def binary_in_word_update(message: Message):
                 select(BinaryConverter)
                 .options(
                     selectinload(BinaryConverter.game_profile),
-                    selectinload(BinaryConverter.game_profile, GameProfile.user),
+                    selectinload(BinaryConverter.game_profile, GameProfile.binary_converter),
                 )
+                .join(GameProfile,  GameProfile.id == BinaryConverter.game_profile_id, isouter=True)
                 .where(GameProfile.user_id == user.id)
             )
             stmt_bynary = (await session.execute(stmt_bynary_converter)).scalar_one_or_none()

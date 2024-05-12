@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.types import Message
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import selectinload

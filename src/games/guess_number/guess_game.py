@@ -2,11 +2,13 @@ import asyncio
 from random import choice, randint
 
 from aiogram import types
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 
 from src.games.guess_number.utils import word_declension
 from src.games.guess_query import guess_game_update
 from src.state_machine import GuessGamesState
+from src.utils.find_nearest_numbers import hint_number
 from src.utils.stikers import (
     COLD_STICKER_LIST,
     HOT_STICKER_LIST,
@@ -15,7 +17,7 @@ from src.utils.stikers import (
 )
 
 
-class GameCon:
+class GameCondition:
     """Game conditions.
 
     Attributes:
@@ -23,34 +25,46 @@ class GameCon:
         COUNT_ATTEMPTS: {user_id: Счетчик попыток одной игровой сессии}.
     """
 
-    SECRETS_NUM_GAME = {}
-    COUNT_ATTEMPTS = {}
-    LAST_MESSAGE = {}
+    SECRETS_NUM_GAME = None
+    COUNT_ATTEMPTS = 0
+    ALL_USER_CHOICE_NUMBER = []
+    LAST_MESSAGE_WITH_STICKER = None
 
 
-async def sticker_message(message: types.Message, sticker):
+async def sticker_message(message: types.Message, sticker: list[str], game_session: GameCondition | None = None):
     """Возвращает рандомный стикер из списка."""
-    res = await message.answer_sticker(
-        sticker=choice(sticker),
-    )
-    return res
+    if game_session:
+        all_number = [str(num) for num in game_session.ALL_USER_CHOICE_NUMBER]
+        hint = await hint_number(game_session.ALL_USER_CHOICE_NUMBER, game_session.SECRETS_NUM_GAME)
+        info_message_for_user = "Все ваши догадки: " + " \\| ".join(all_number) + "\n\nПодсказка: " + "||попробуй " + hint + "||"
+        await message.answer(text=info_message_for_user, parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer_sticker(
+            sticker=choice(sticker),
+        )
+    else:
+        await message.answer_sticker(
+            sticker=choice(sticker),
+        )
 
 
 async def guess_number(message: types.Message, state: FSMContext):
     """Отправка сообщения c результатом игры."""
-    identifier_user = message.from_user.id
-    game_session = GameCon()
-    secret = game_session.SECRETS_NUM_GAME[identifier_user]
+    state_data = await state.get_data()
+    game_session: GameCondition = state_data["guess_game_session"]
+    secret = game_session.SECRETS_NUM_GAME
+
     try:
-        value = int(message.text)
+        user_choice_number = int(message.text)
     except ValueError:
-        value = ord(message.text[0])
-    game_session.COUNT_ATTEMPTS[identifier_user] += 1
-    if 0 > value or value > 100:
-        await sticker_message(message, NOT_STICKER_LIST)
-        await state.update_data(value=value)
-        return
-    if game_session.COUNT_ATTEMPTS[identifier_user] >= 30:
+        user_choice_number = ord(message.text[0])
+
+    game_session.ALL_USER_CHOICE_NUMBER.append(user_choice_number)
+    game_session.COUNT_ATTEMPTS += 1
+
+    if 0 > user_choice_number or user_choice_number > 100:
+        await sticker_message(message, NOT_STICKER_LIST, game_session)
+        return None
+    if game_session.COUNT_ATTEMPTS >= 30:
         await state.clear()
         await message.answer(
             text="##########"
@@ -60,47 +74,45 @@ async def guess_number(message: types.Message, state: FSMContext):
             "### Игра окончена.\n"
             "###########",
         )
-        return
-    if value > secret:
-        await sticker_message(message, HOT_STICKER_LIST)
-        await state.update_data(value=value)
-        return
-    elif value < secret:
-        await sticker_message(message, COLD_STICKER_LIST)
-        await state.update_data(value=value)
-        return
+        return None
+    if user_choice_number > secret:
+        await sticker_message(message, HOT_STICKER_LIST, game_session)
+        await message.delete()
+        return None
+    elif user_choice_number < secret:
+        await sticker_message(message, COLD_STICKER_LIST, game_session)
+        await message.delete()
+        return None
     else:
         await sticker_message(message, WIN_STICKER_LIST)
         await state.clear()
         await asyncio.sleep(1.5)
-        count_attempts = game_session.COUNT_ATTEMPTS.pop(identifier_user)
-        del game_session.SECRETS_NUM_GAME[identifier_user]
-        # await create_user(message)
-        await guess_game_update(message, count_attempts)
+        await guess_game_update(message, game_session.COUNT_ATTEMPTS)
         await message.answer(
             text="#######🎉🎉🎉\n"
             "### УРААА!!!\n### ПОБЕДА!\n"
             "### У тебя получилось угадать"
             " за "
-            + str(count_attempts)
+            + str(game_session.COUNT_ATTEMPTS)
             + " "
-            + word_declension(count_attempts)
+            + word_declension(game_session.COUNT_ATTEMPTS)
             + "\n"
             "### 🎊 Внушительный результат!!!\n"
             "### Игра окончена! \n"
             "########🎉🎉🎉",
         )
-        return
+        await message.delete()
+        return None
 
 
 async def info_game_number(message: types.Message, state: FSMContext, games_state: GuessGamesState):
     """Пользовательский ввод и состояние для игры."""
+    await state.clear()
     await state.set_state(games_state.name)
-    identifier_user = message.from_user.id
     secret = randint(0, 100)
-    game_session = GameCon()
-    game_session.COUNT_ATTEMPTS[identifier_user] = 0
-    game_session.SECRETS_NUM_GAME[identifier_user] = secret
+    guess_game_session_obj = GameCondition()
+    guess_game_session_obj.SECRETS_NUM_GAME = secret
+    await state.update_data(guess_game_session=guess_game_session_obj)
     await message.answer(
         "###########\n"
         "### Угадай ЧИСЛО!\n"

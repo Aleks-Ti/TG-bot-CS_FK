@@ -10,7 +10,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from dotenv import load_dotenv
 
-from src.core.exeptions import TranscriptWordExeption
 from src.games.binary_converter.converter import transcript_byte as _transcript_byte
 from src.games.binary_converter.converter import transcript_word as _transcript_word
 from src.games.guess_number.guess_game import guess_number as _guess_number
@@ -282,7 +281,7 @@ async def converter_profile(callback_query: types.CallbackQuery):
             )
             answer += " * Конвертирований двоичного кода в символы:\n"
             answer += f"  --  Общее количество попыток декодирования: &lt; {binary_converter.total_try_convert_byte_in_word} &gt;\n"
-            answer += f"  --  Количество блоков символов представленных в двоичном коде: &lt; {binary_converter.number_decoded_word} &gt;\n"
+            answer += f"  --  Количество блоков символов представленных в двоичном коде: &lt; {binary_converter.number_decoded_word} &gt;\n"  # noqa
             answer += f"  --  Общее количество переданных нулей и единиц: &lt; {binary_converter.number_decoded_characters} &gt;\n"
         else:
             answer += "   Нет результатов\nМожет пора сыграть? (V)O_o(V)"

@@ -1,2 +1,2 @@
-def delete_image_in_system(image_path):
+async def delete_image_in_system(path: str):
     pass

@@ -1,11 +1,9 @@
 import asyncio as asyn
-import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from bitarray import bitarray
 
-from src.core.exeptions import TranscriptWordExeption
 from src.games.binary_query import binary_in_word_update, word_in_binary_update
 from src.utils.stikers import STICKER_ANGRY_HACKER, STICKER_FANNY_HACKER
 
