@@ -18,8 +18,8 @@ async def guess_game_update(message: Message, count_attempts):
                 select(GuessNumber)
                 .options(
                     selectinload(GuessNumber.game_profile),
-                    selectinload(GuessNumber.game_profile, GameProfile.user),
-                )
+                    selectinload(GuessNumber.game_profile, GameProfile.guess_number),
+                ).join(GameProfile,  GameProfile.id == GuessNumber.game_profile_id, isouter=True)
                 .where(GameProfile.user_id == user.id)
             )
             res_guess_number = (await session.execute(stmt_guess_number)).scalar_one_or_none()

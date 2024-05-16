@@ -176,7 +176,7 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
         )
         await update_or_create_haort_game(callback_query, state)
         await state.clear()
-        delete_image_in_system(output_image_path)
+        await delete_image_in_system(output_image_path)
     else:
         await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
         await callback_query.message.edit_caption(reply_markup=keyboard)

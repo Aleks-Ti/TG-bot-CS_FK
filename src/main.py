@@ -23,6 +23,7 @@ from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.buttons import MainKeyboard as mk
 from src.utils.buttons import ProfileInlineKeyboard as pic
+from src.utils.delete_image import delete_image_in_system
 
 load_dotenv()
 
@@ -242,7 +243,6 @@ async def choose_games_difficulty(message: Message, state: FSMContext):
         "Выберите сложность игры",
         reply_markup=keyboard,
     )
-    # message.delete()
 
 
 """
@@ -300,7 +300,7 @@ async def show_best_game(callback_query: types.CallbackQuery):
         game_difficulty = int(callback_query.data.replace("-", ""))
         path_image = await show_image_by_game_difficulty_in_profile_user(callback_query, game_difficulty)
         await callback_query.message.answer_photo(get_image(path_image))
-        os.remove(path_image)
+        await delete_image_in_system(path_image)
     except Exception as err:
         logging.exception(f"Error. {err}")
 
