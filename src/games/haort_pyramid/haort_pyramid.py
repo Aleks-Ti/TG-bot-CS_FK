@@ -185,10 +185,11 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     state_data = await state.get_data()
     complete_tower = [x for x in range((state_data["game_difficulty"]), 0, -1)]
+    stack = Stack
     towers = {
-        hpik.TOWER_1: Stack(complete_tower),
-        hpik.TOWER_2: Stack(),
-        hpik.TOWER_3: Stack(),
+        hpik.TOWER_1: stack(complete_tower),
+        hpik.TOWER_2: stack(),
+        hpik.TOWER_3: stack(),
     }
     await state.update_data(towers_condition=towers)
     start_message = "Игра началась!\n"

@@ -24,11 +24,12 @@ class GameCondition:
         SECRETS_NUM_GAME: {user_id: Рандомное число от 0 до 100}.
         COUNT_ATTEMPTS: {user_id: Счетчик попыток одной игровой сессии}.
     """
-
-    SECRETS_NUM_GAME = None
-    COUNT_ATTEMPTS = 0
-    ALL_USER_CHOICE_NUMBER = []
-    LAST_MESSAGE_WITH_STICKER = None
+    def __init__(self) -> None:
+        # self.unique_id = str(uuid.uuid4())
+        self.SECRETS_NUM_GAME = None
+        self.COUNT_ATTEMPTS = 0
+        self.ALL_USER_CHOICE_NUMBER = []
+        self.LAST_MESSAGE_WITH_STICKER = None
 
 
 async def sticker_message(message: types.Message, sticker: list[str], game_session: GameCondition | None = None):

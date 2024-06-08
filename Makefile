@@ -16,5 +16,5 @@ revision:
 migrate:
 	alembic upgrade head
 
-make st:
+st:
 	ruff . --fix

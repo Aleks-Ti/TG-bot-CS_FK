@@ -357,7 +357,7 @@ async def send_welcome(message: Message):
     Вызывается в случаем получения команды `/start`
 
     methods:
-        create_user - создания юзера и занесения в базу данных.
+        get_or_create_user - создания юзера и занесения в базу данных.
     """
 
     user = await get_or_create_user(message)
