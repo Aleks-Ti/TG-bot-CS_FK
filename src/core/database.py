@@ -16,12 +16,3 @@ def create_async_engine(url: URL | str) -> AsyncEngine:
 async_session_maker: Callable[..., AsyncSession] = sessionmaker(
     create_async_engine(conf().build_connection_str()), class_=AsyncSession, expire_on_commit=False,
 )
-
-
-async def get_async_session():
-    async with async_session_maker() as session:
-        yield session
-
-
-async def migrate():
-    subprocess.run("alembic upgrade head", shell=True, check=True)
