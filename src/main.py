@@ -398,6 +398,7 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
         asyncio.run(main())
     except KeyboardInterrupt:
-        pass
+        print("Ручная остановка программы.")
+        sys.exit(1)
     except Exception as err:
         logging.exception(f"Error. {err}")
