@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 from PIL import Image, ImageDraw, ImageFont
 
-from src.games.haort_query import get_win_game_by_difficulty, update_or_create_haort_game
+from src.games.haort_pyramid.haort_query import get_win_game_by_difficulty, update_or_create_haort_game
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.delete_image import delete_image_in_system
 

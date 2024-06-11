@@ -6,7 +6,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 
 from src.games.guess_number.utils import word_declension
-from src.games.guess_query import guess_game_update
+from src.games.guess_number.guess_query import guess_game_update
 from src.state_machine import GuessGamesState
 from src.utils.find_nearest_numbers import hint_number
 from src.utils.stikers import (
