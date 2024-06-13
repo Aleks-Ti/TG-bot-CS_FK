@@ -1,4 +1,3 @@
-import subprocess
 from collections.abc import Callable
 
 from sqlalchemy.engine.url import URL

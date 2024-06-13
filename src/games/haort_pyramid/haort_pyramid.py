@@ -11,6 +11,9 @@ from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.delete_image import delete_image_in_system
 
 
+MAX_LEVEL_TOWER = 12
+
+
 class StackIsEmptyError(Exception):
     pass
 
@@ -54,6 +57,7 @@ class Stack:
 def builder_level_towers(disc: int, total_disc: int) -> str:
     """Генерирует горизонтальный уровень башни."""
 
+    symbol = "🔤"
     result = ""
     if disc == 0:
         space = "   " * (total_disc)
@@ -61,9 +65,9 @@ def builder_level_towers(disc: int, total_disc: int) -> str:
     else:
         space = "   " * ((total_disc) - disc)
         if disc > 9:
-            result += space + "#" * disc + f"|_{disc}_|" + "#" * (disc - 1) + space
+            result += space + symbol * disc + f"|_{disc}_|" + symbol * (disc - 1) + space
         else:
-            result += space + "#" * disc + f"|_{disc}_|" + "#" * disc + space
+            result += space + symbol * disc + f"|_{disc}_|" + symbol * disc + space
     return result
 
 
@@ -75,13 +79,13 @@ def show_towers(towers: dict[str, Stack], total_disc: int):
         и заполнение их нулями (total_disc + 1) \
         для полноценного графического отображения башни в терминале.
     """
-    tower_a = [0] * ((total_disc + 1) - len(towers[hpik.TOWER_1].result)) + towers[hpik.TOWER_1].result[::-1]
-    tower_b = [0] * ((total_disc + 1) - len(towers[hpik.TOWER_2].result)) + towers[hpik.TOWER_2].result[::-1]
-    tower_c = [0] * ((total_disc + 1) - len(towers[hpik.TOWER_3].result)) + towers[hpik.TOWER_3].result[::-1]
+    tower_a = [0] * (MAX_LEVEL_TOWER - len(towers[hpik.TOWER_1].result)) + towers[hpik.TOWER_1].result[::-1]
+    tower_b = [0] * (MAX_LEVEL_TOWER - len(towers[hpik.TOWER_2].result)) + towers[hpik.TOWER_2].result[::-1]
+    tower_c = [0] * (MAX_LEVEL_TOWER - len(towers[hpik.TOWER_3].result)) + towers[hpik.TOWER_3].result[::-1]
 
     count = 0
     result = ""
-    while not count > total_disc:
+    while count < MAX_LEVEL_TOWER:
         result += builder_level_towers(tower_a[count], total_disc)
         result += builder_level_towers(tower_b[count], total_disc)
         result += builder_level_towers(tower_c[count], total_disc) + "\n"
@@ -105,16 +109,16 @@ async def game_condition_check(
 
 async def text_to_image(image_path, towers, game_difficulty):
     try:
-        line_height = 15
+        y_level_between_spacing = 13  # отступ между уровнями башни
         image = Image.new("RGB", (470, 200), color=(255, 255, 255))
         draw = ImageDraw.Draw(image)
         font = ImageFont.load_default(size=11.0)
-        y_text = 10
+        y_distance_top = 35  # отступ по Y от верхнего края картинки.
         for line in show_towers(towers, game_difficulty):
             _, _, text_w, _ = font.getbbox(line)
-            x_text = ((image.width - text_w) // 2)  # Положение текста по оси X к центру
-            draw.text((x_text, y_text), line, font=font, fill=(0, 0, 0))
-            y_text += line_height
+            x_distance_left = ((image.width - text_w) // 2)  # Положение текста по оси X к центру
+            draw.text((x_distance_left, y_distance_top), line, font=font, fill=(0, 0, 0))
+            y_distance_top += y_level_between_spacing
         image.save(image_path)
         return image
     except Exception as err:

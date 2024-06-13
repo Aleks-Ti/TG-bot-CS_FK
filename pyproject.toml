@@ -6,7 +6,7 @@ authors = ["Aleks-Ti <mti61ro@yandex.ru>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 python-dotenv = "1.0.0"
 bitarray = "2.8.0"
 aiogram = "^3.4.1"

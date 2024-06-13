@@ -1,0 +1,20 @@
+version: '3.3'
+
+
+services:
+  bot:
+    build: ./
+    env_file: .env
+    depends_on:
+      - postgres
+  postgres:
+    image: "postgres:16"
+    restart: always
+    env_file: .env
+    ports:
+      - "5444:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
