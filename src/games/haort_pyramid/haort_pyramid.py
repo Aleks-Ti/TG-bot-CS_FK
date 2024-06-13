@@ -10,7 +10,6 @@ from src.games.haort_pyramid.haort_query import get_win_game_by_difficulty, upda
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.delete_image import delete_image_in_system
 
-
 MAX_LEVEL_TOWER = 12
 
 
