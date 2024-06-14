@@ -8,7 +8,7 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY ./ ./
 
-# ENV PYTHONPATH=$PYTHONPATH:/src
+ENV PYTHONPATH=$PYTHONPATH:/src
 
 CMD ["alembic", "upgrade", "head"]
 

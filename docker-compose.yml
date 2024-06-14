@@ -1,20 +1,32 @@
-version: '3.3'
+version: '3.8'
 
+networks:
+  space:
+    name: tg_app_space
+    driver: bridge
 
 services:
   bot:
+    container_name: bot_app
     build: ./
     env_file: .env
+    networks:
+      - space
     depends_on:
-      - postgres
-  postgres:
+      - db
+  db:
     image: "postgres:16"
+    container_name: bot_db
     restart: always
     env_file: .env
-    ports:
-      - "5444:5432"
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB_NAME}
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_PORT: ${PG_PORT}
     volumes:
       - pg_data:/var/lib/postgresql/data
-
+    networks:
+      - space
 volumes:
   pg_data:

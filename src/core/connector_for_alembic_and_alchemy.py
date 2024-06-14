@@ -9,12 +9,11 @@ load_dotenv()
 
 @dataclass
 class DataBaseConfig:
-    name_db: str | None = getenv("POSTGRES_DB_NAME")
-    user: str | None = getenv("POSTGRES_USERNAME")
-    password: str | None = getenv("POSTGRES_PASSWORD")
-    port: str | None = getenv("POSTGRES_PORT")
-    host: str | None = getenv("POSTGRES_HOST")
-
+    name_db: str | None = getenv("PG_DB_NAME")
+    user: str | None = getenv("PG_USERNAME")
+    password: str | None = getenv("PG_PASSWORD")
+    port: str | None = getenv("PG_PORT")
+    host: str | None = getenv("PG_HOST")
     driver: str = "asyncpg"
     database_system = "postgresql"
 
