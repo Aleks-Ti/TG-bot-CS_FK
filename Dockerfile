@@ -10,6 +10,8 @@ COPY alembic.ini .
 
 COPY ./migrations ./migrations
 
+COPY ./static ./static
+
 RUN pip install -r requirements.txt --no-cache-dir
 
 COPY ./src ./src

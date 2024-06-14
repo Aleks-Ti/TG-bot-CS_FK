@@ -1,9 +1,9 @@
-name: Main Foodgram workflow
+name: Main tg_bot_cs_fk workflow
 
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   tests:
