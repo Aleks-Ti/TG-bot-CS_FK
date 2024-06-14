@@ -42,10 +42,10 @@ logging.getLogger().addHandler(console_handler)
 
 dp = Dispatcher()
 
-TELEGRAM_TOKEN = os.getenv("TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("CHAT_ID")
-
-RETRY_PERIOD = 10  # Период обращения
+if token := os.getenv("TOKEN", default=False):
+    TELEGRAM_TOKEN = token
+else:
+    raise ValueError("Нет переменной << TOKEN >> в .env файле для бота телеграма.")
 
 
 @dp.message(Command("cancel"))
@@ -63,8 +63,6 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     except Exception as err:
         logging.exception(f"Error: command cancel - {err}")
 
-
-# ===================================== SEPARATOR =========================================
 
 """
 ################################################
@@ -97,7 +95,6 @@ END block convert WORD IN BINARY
 ################################################
 """
 
-# ===================================== SEPARATOR =========================================
 
 """
 ################################################
@@ -126,7 +123,6 @@ END block convert BINARY IN WORD
 ################################################
 """
 
-# ===================================== SEPARATOR =========================================
 
 """
 ################################################
@@ -156,7 +152,6 @@ END block GUESS GAME
 ################################################
 """
 
-# ===================================== SEPARATOR =========================================
 
 """
 ################################################
@@ -252,6 +247,13 @@ END block Pyramid Haort
 """
 
 
+"""
+################################################
+START block Profile User
+################################
+"""
+
+
 @dp.callback_query(F.data == pic.guess_game_profile)
 async def guess_game_profile(callback_query: types.CallbackQuery):
     get_profile = await get_profile_users(callback_query)
@@ -335,6 +337,13 @@ async def haort_game_profile(callback_query: types.CallbackQuery):
             text="Можете посмотреть финальный ход лучшей игры.\nВыберете сложность игры, которую хотите глянуть.",
             reply_markup=keyboard,
         )
+
+
+"""
+################################
+END block Profile User
+################################################
+"""
 
 
 @dp.message((F.text == mk.ME_PROFILE))
