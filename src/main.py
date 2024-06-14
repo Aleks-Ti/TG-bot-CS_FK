@@ -399,6 +399,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Ручная остановка программы.")
-        sys.exit(1)
     except Exception as err:
         logging.exception(f"Error. {err}")
