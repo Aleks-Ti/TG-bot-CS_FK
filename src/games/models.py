@@ -48,7 +48,7 @@ class HaortPyramid(Base):
     __tablename__ = "haort_pyramid"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, nullable=False, unique=True)
-    game_difficulty: Mapped[int] = mapped_column(sa.Integer, nullable=False, unique=True)
+    game_difficulty: Mapped[int] = mapped_column(sa.Integer, nullable=False, unique=False)
     best_result: Mapped[dict] = mapped_column(sa.JSON, nullable=True, unique=False)
     total_number_permutations: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)
     total_number_games: Mapped[int] = mapped_column(sa.Integer, default=0, nullable=True, unique=False)

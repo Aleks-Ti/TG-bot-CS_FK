@@ -11,10 +11,13 @@ start:
 	python src/main.py
 
 revision:
-	alembic revision --autogenerate -m "Added account table"
+	alembic revision --autogenerate -m "fix game dificulty"
 
 migrate:
 	alembic upgrade head
 
 st:
 	ruff . --fix
+
+startd:
+	docker compose down && docker compose up -d

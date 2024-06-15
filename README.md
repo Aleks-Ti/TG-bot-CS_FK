@@ -47,13 +47,15 @@ TOKEN = "your TG token of the channel bot"
 Чтобы запустить проект, нужно ввести:
 
 ```bash
-python src/main.py
-```
-
-или
-
-```bash
-make start
+python src/main.py  # должен быть предсозданна БД и на нее в .env указаны данные/Postgres локально установленный.
+# or
+make start  # должен быть предсозданна БД и на нее в .env указаны данные/Postgres локально установленный.
+# or
+docker compose up --build -d # запуск через докер - первый запуск
+# в дальнейшем можно так:
+make startd  # запуск через докер
+# or
+docker compose up -d
 ```
 
 ### License

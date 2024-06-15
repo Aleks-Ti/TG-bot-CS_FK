@@ -35,8 +35,6 @@ extend-exclude = [  # игнор файлов и директорий
     "build",
     "dist",
     "node_modules",
-    "venv",
-    "ex_venv",
     "env.py",
     "versions",
     "migrations",

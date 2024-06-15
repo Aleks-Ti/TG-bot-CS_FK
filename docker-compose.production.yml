@@ -8,7 +8,7 @@ networks:
 services:
   bot:
     container_name: bot_app
-    build: ./
+    image: aleksti/tg-bot-cs_fk:latest
     env_file: .env
     networks:
       - space
