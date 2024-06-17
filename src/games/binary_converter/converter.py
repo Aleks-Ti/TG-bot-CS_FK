@@ -30,7 +30,7 @@ async def transcript_byte(message: types.Message, state: FSMContext):
     """Отправка сообщения с данными конвертации байт кода в utf-8"""
     await state.clear()
     await binary_in_word_update(message)
-    messages = await byte_convert_in_word(message.text)
+    result = await byte_convert_in_word(message.text)
     await message.answer(
         text="Лучшие ученые мира принялись за расшифровку! 🧮🧮🧮",
     )
@@ -41,17 +41,16 @@ async def transcript_byte(message: types.Message, state: FSMContext):
     await asyn.sleep(2)
     await message.answer(text="Получение данных ⚙️⚙️⚙️")
     await asyn.sleep(2)
-    await message.answer(
-        text=f"Вернулся ответ. Читаем!\nРезультат"
-        f":\n\t\t\t\t\t\t\t\t\t->\t\t\t{messages}",
-    )
+    text = "Вернулся ответ. Читаем!\nРезультат:\n"
+    answer_message = text + "<pre>" + result + "</pre>"
+    await message.answer(answer_message)
 
 
 async def transcript_word(message: types.Message, state: FSMContext):
     """Отправка сообщения с данными конвертированными в байт код."""
     await state.clear()
     await word_in_binary_update(message)
-    messages = await word_convert_in_binary(message.text)
+    result = await word_convert_in_binary(message.text)
     await message.answer(
         text="Происходит запрос 📡 на главные сервера планеты 📟📟📟",
     )
@@ -62,4 +61,5 @@ async def transcript_word(message: types.Message, state: FSMContext):
     await asyn.sleep(2)
     await message.answer(text="Получение данных ⚙️⚙️⚙️")
     await asyn.sleep(2)
-    await message.answer(text=messages)
+    answer_message = "<pre>" + result + "</pre>"
+    await message.answer(answer_message)

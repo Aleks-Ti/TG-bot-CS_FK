@@ -11,16 +11,6 @@ class WordInByteState(StatesGroup):
     cancel = State()
 
 
-class HaortGamesState(StatesGroup):  #NOTE это лишнее, проверить бы
-    """Haort game.
-    Ожидание пользовательского ввода Haort game.
-    """
-
-    start_game = State()
-    game = State()
-    cancel = State()
-
-
 class GuessGamesState(StatesGroup):
     """Guess game.
     Ожидание пользовательского ввода guess game.
