@@ -10,10 +10,10 @@ class User(Base):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, nullable=False, unique=True)
-    username: Mapped[str] = mapped_column(sa.String(64), nullable=False, unique=True)
+    username: Mapped[str] = mapped_column(sa.String(64), nullable=False, unique=False)
     tg_user_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=False, unique=True)
-    first_name: Mapped[str] = mapped_column(sa.String(64), nullable=True, unique=True)
-    last_name: Mapped[str] = mapped_column(sa.String(64), nullable=True, unique=True)
+    first_name: Mapped[str] = mapped_column(sa.String(64), nullable=True, unique=False)
+    last_name: Mapped[str] = mapped_column(sa.String(64), nullable=True, unique=False)
     registered_at: Mapped[datetime] = mapped_column(sa.DateTime, default=datetime.now)
 
     game_profile = relationship("GameProfile", back_populates="user", uselist=False)
