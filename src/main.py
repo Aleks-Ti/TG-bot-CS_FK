@@ -403,7 +403,7 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    # test
+    # test ci/cd
     try:
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
         asyncio.run(main())
