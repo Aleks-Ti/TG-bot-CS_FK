@@ -2,7 +2,8 @@ async def hint_number(numbers: list[int], target: int) -> str:
     nearest_lower = 0
     nearest_higher = 100
     iter_numbers = numbers.copy()
-    for num in iter_numbers.sort():
+    iter_numbers.sort()
+    for num in iter_numbers:
         if nearest_lower < num <= target:
             nearest_lower = num
             continue

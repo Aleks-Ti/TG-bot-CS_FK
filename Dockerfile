@@ -2,7 +2,9 @@ FROM python:3.12
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY pyproject.toml poetry.lock ./
+RUN pip install poetry
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
 COPY Makefile .
 
@@ -17,7 +19,5 @@ RUN pip install -r requirements.txt --no-cache-dir
 COPY ./src ./src
 
 ENV PYTHONPATH=$PYTHONPATH:/src
-
-CMD ["alembic", "upgrade head"]
 
 CMD ["python", "src/main.py"]

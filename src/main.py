@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import subprocess
 import sys
 
 from aiogram import Bot, Dispatcher, F, types
@@ -404,6 +405,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     try:
+        subprocess.run("alembic upgrade head", shell=True, check=True)
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
         asyncio.run(main())
     except KeyboardInterrupt:

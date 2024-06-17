@@ -26,6 +26,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 build.md
+.ruff_cache
+my_example_ruff.toml
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
