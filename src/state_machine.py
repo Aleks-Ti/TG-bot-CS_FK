@@ -13,6 +13,7 @@ class WordInByteState(StatesGroup):
 
 class GuessGamesState(StatesGroup):
     """Guess game.
+
     Ожидание пользовательского ввода guess game.
     """
 

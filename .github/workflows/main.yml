@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to Docker 
@@ -32,8 +32,8 @@ jobs:
       - build_and_push_to_docker_hub
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
-    - name: Copy docker-compose.yml via ssh
+      uses: actions/checkout@v4
+    - name: Copy docker-compose.production.yml via ssh
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
