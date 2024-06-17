@@ -3,7 +3,7 @@ name: Main tg_bot_cs_fk workflow
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   build_and_push_to_docker_hub:
