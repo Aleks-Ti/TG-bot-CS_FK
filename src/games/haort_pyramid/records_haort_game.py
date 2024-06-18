@@ -1,4 +1,5 @@
 from aiogram import types
+
 from src.games.haort_pyramid.haort_query import get_all_result_game_by_difficulty
 from src.games.models import HaortPyramid
 

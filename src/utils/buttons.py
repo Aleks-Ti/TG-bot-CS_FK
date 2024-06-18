@@ -1,5 +1,4 @@
 from aiogram import types
-from typing import Optional
 
 
 class MainKeyboard:
@@ -61,9 +60,9 @@ async def inline_buttons_generator(buttons: list[str, int], prefix=None, postfix
         if count == max_button_one_page:
             result_list_buttons.append(temp_list_buttons)
             temp_list_buttons = []
-            count = 0  # clear
+            count = 0  # because clear temp_list_buttons
             temp_list_buttons.append(types.InlineKeyboardButton(text=text, callback_data=text))
-            count += 1  # + 1 because we need to add 1 button to the next page
+            count += 1  # + 1 because after clearing the list, a subsequent button from the iteration has already been added
         else:
             temp_list_buttons.append(types.InlineKeyboardButton(text=text, callback_data=text))
             count += 1

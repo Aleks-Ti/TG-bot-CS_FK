@@ -205,15 +205,13 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
     start_message += (
         (
             f"Перед вами стартовая позиция.\n"
-            f"Переместите диски пирамиды {hpik.TOWER_1},"
-            f" на любой другой стержень {hpik.TOWER_2} или {hpik.TOWER_3}, в"
-            f" правильном порядке, чтобы победить!\n"
+            f"Основная задача, переместить пирамиду полностью, на два не занятых стержня.\n"
+            f"К примеру, попробуй переместить диски с пирамиды {hpik.TOWER_1},"
+            f" на любой другой стержень {hpik.TOWER_2} или {hpik.TOWER_3}.\n\n"
         )
     )
     start_message += (
-            f"Переместите диск с одной башни на другую.\n"
-            f"Пример команды: с {hpik.TOWER_1} на {hpik.TOWER_3} или с {hpik.TOWER_1} на {hpik.TOWER_2} или"
-            f" с {hpik.TOWER_3} на {hpik.TOWER_2} и т.п.\n")
+            f"Пример команды: с {hpik.TOWER_1} на {hpik.TOWER_3} или с {hpik.TOWER_1} на {hpik.TOWER_2} и т.п.\n")
 
     await callback_query.message.answer(text=start_message)
     output_image_path = "static/" + str(callback_query.from_user.id) + "_hanoi_towers.png"
