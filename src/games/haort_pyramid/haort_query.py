@@ -129,7 +129,7 @@ async def get_all_result_game_by_difficulty(game_difficulty: int):
                     selectinload(HaortPyramid.game_profile).selectinload(GameProfile.user),
                 )
                 .where(HaortPyramid.game_difficulty == game_difficulty)
-                .order_by(HaortPyramid.total_number_permutations.desc()).limit(10)
+                .order_by(HaortPyramid.total_number_permutations.asc()).limit(10)
             )
             res = await session.execute(stmt)
             return res.scalars().all()
