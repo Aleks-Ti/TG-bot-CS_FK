@@ -18,12 +18,15 @@ from src.games.guess_number.guess_game import info_game_number
 from src.games.haort_pyramid.haort_pyramid import active_haort_game as _active_haort_game
 from src.games.haort_pyramid.haort_pyramid import get_image, show_image_by_game_difficulty_in_profile_user
 from src.games.haort_pyramid.haort_pyramid import start_haort_game as _start_haort_game
+from src.games.haort_pyramid.haort_query import get_all_difficulty_for_games
+from src.games.haort_pyramid.records_haort_game import records_haort_game_by_game_difficulty
 from src.games.models import BinaryConverter, HaortPyramid
 from src.state_machine import ByteInWordState, GuessGamesState, WordInByteState
 from src.user.user_query import get_or_create_user, get_profile_users
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.buttons import MainKeyboard as mk
 from src.utils.buttons import ProfileInlineKeyboard as pic
+from src.utils.buttons import inline_buttons_generator
 from src.utils.delete_image import delete_image_in_system
 
 load_dotenv()
@@ -209,32 +212,7 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
 
 @dp.message((F.text == mk.HAORT_GAME))
 async def choose_games_difficulty(message: Message, state: FSMContext):
-    buttons = [
-        [
-            types.InlineKeyboardButton(
-                text=str(number_difficulty),
-                callback_data=str(number_difficulty),
-            )
-            for number_difficulty in range(3, 6)
-        ],
-        [
-            types.InlineKeyboardButton(
-                text=str(number_difficulty),
-                callback_data=str(number_difficulty),
-            )
-            for number_difficulty in range(6, 9)
-        ],
-        [
-            types.InlineKeyboardButton(
-                text=str(number_difficulty),
-                callback_data=str(number_difficulty),
-            )
-            for number_difficulty in range(9, 12)
-        ],
-    ]
-    keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=buttons,
-    )
+    keyboard = await inline_buttons_generator([x for x in range(3, 12)])
     message = await message.answer(
         "Выберите сложность игры",
         reply_markup=keyboard,
@@ -340,13 +318,6 @@ async def haort_game_profile(callback_query: types.CallbackQuery):
         )
 
 
-"""
-################################
-END block Profile User
-################################################
-"""
-
-
 @dp.message((F.text == mk.ME_PROFILE))
 async def profile_user(message: Message):
     button_1 = types.InlineKeyboardButton(text=pic.guess_game_profile, callback_data=pic.guess_game_profile)
@@ -359,6 +330,49 @@ async def profile_user(message: Message):
         "Профиль какой игры хотите посмотреть?",
         reply_markup=keyboard,
     )
+
+
+"""
+################################
+END block Profile User
+################################################
+"""
+
+
+"""
+################################################
+START block Records Haort Game
+################################
+"""
+
+
+@dp.callback_query(
+        (F.data == "~4~") | (F.data == "~5~") | (F.data == "~6~") | (F.data == "~3~") | (F.data == "~7~") |
+        (F.data == "~8~") | (F.data == "~9~") | (F.data == "~10~") | (F.data == "~11~"),
+)
+async def get_records_haort_game(callback_query: types.CallbackQuery):
+    try:
+        game_difficulty = int(callback_query.data.replace("~", ""))
+        await records_haort_game_by_game_difficulty(callback_query, game_difficulty)
+    except Exception as err:
+        logging.exception(f"Error. {err}")
+
+
+@dp.message((F.text == mk.records_haort_game))
+async def records_haort_game(message: Message):
+    all_difficulty_for_games = await get_all_difficulty_for_games()
+    buttons = await inline_buttons_generator(all_difficulty_for_games, prefix="~", postfix="~")
+    await message.answer(
+        "Рейтинг для какой сложности хотите посмотреть?",
+        reply_markup=buttons,
+    )
+
+
+"""
+################################
+END block Records Haort Game
+################################################
+"""
 
 
 @dp.message(CommandStart())
@@ -378,8 +392,9 @@ async def send_welcome(message: Message):
     button_4 = types.KeyboardButton(text=mk.HAORT_GAME)
     button_5 = types.KeyboardButton(text=mk.ME_PROFILE)
     button_6 = types.KeyboardButton(text=mk.cancel)
+    button_7 = types.KeyboardButton(text=mk.records_haort_game)
     keyboard = types.ReplyKeyboardMarkup(
-        keyboard=[[button_3], [button_4], [button_1], [button_2], [button_5], [button_6]],
+        keyboard=[[button_3], [button_4], [button_7], [button_1], [button_2], [button_5], [button_6]],
         resize_keyboard=True,
     )
 

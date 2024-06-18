@@ -1,3 +1,7 @@
+from aiogram import types
+from typing import Optional
+
+
 class MainKeyboard:
     """
     Кнопки для главного меню.
@@ -12,10 +16,11 @@ class MainKeyboard:
 
     GAMES_GUESS_NUMBER: str = "Игра - Угадай число! -"
     ME_PROFILE: str = "Мой Профиль"
-    CONVERT_WORD_IN_BINARY_CODE: str = "Слова в двоичный код"
-    CONVERT_BINARY_CODE_IN_WORD: str = "Двоичный код в слова"
-    HAORT_GAME: str = "Пирамида Хаорта"
+    CONVERT_WORD_IN_BINARY_CODE: str = "Конвертер - Слова в двоичный код"
+    CONVERT_BINARY_CODE_IN_WORD: str = "Конвертер - Двоичный код в слова"
+    HAORT_GAME: str = "Игра - Пирамида Хаорта"
     cancel: str = "Отмена"
+    records_haort_game: str = "Рекорды: Пирамида Хаорта"
 
 
 class ProfileInlineKeyboard:
@@ -44,3 +49,27 @@ class HaortPyramidInlineKeyboard:
     TOWER_1: str = "Alpha"
     TOWER_2: str = "Betta"
     TOWER_3: str = "Gamma"
+
+
+async def inline_buttons_generator(buttons: list[str, int], prefix=None, postfix=None) -> list:
+    max_button_one_page = 3
+    result_list_buttons = []
+    temp_list_buttons = []
+    count = 0
+    for value in buttons:
+        text = f"{prefix if prefix else ''}{value if isinstance(value, str) else str(value)}{postfix if postfix else ''}"
+        if count == max_button_one_page:
+            result_list_buttons.append(temp_list_buttons)
+            temp_list_buttons = []
+            count = 0  # clear
+            temp_list_buttons.append(types.InlineKeyboardButton(text=text, callback_data=text))
+            count += 1  # + 1 because we need to add 1 button to the next page
+        else:
+            temp_list_buttons.append(types.InlineKeyboardButton(text=text, callback_data=text))
+            count += 1
+    if temp_list_buttons is not None:
+        result_list_buttons.append(temp_list_buttons)
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=result_list_buttons,
+    )
+    return keyboard

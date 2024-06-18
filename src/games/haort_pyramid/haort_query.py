@@ -91,7 +91,7 @@ async def update_or_create_haort_game(message: Message, state: FSMContext) -> No
             logging.exception(f"Error. {err}")
 
 
-async def get_win_game_by_difficulty(message: Message, game_difficulty: int) -> HaortPyramid:
+async def get_win_game_by_difficulty_for_user(message: Message, game_difficulty: int) -> HaortPyramid:
     user: User = await get_or_create_user(message)
     async with async_session_maker() as session:
         try:
@@ -105,6 +105,34 @@ async def get_win_game_by_difficulty(message: Message, game_difficulty: int) -> 
             )
             res = await session.execute(stmt)
             return res.scalar_one()
+
+        except Exception as err:
+            logging.exception(f"Error. {err}")
+
+
+async def get_all_difficulty_for_games():
+    async with async_session_maker() as session:
+        try:
+            stmt = select(HaortPyramid.game_difficulty).distinct()
+            res = await session.execute(stmt)
+            return res.scalars().all()
+
+        except Exception as err:
+            logging.exception(f"Error. {err}")
+
+
+async def get_all_result_game_by_difficulty(game_difficulty: int):
+    async with async_session_maker() as session:
+        try:
+            stmt = (
+                select(HaortPyramid).options(
+                    selectinload(HaortPyramid.game_profile).selectinload(GameProfile.user),
+                )
+                .where(HaortPyramid.game_difficulty == game_difficulty)
+                .order_by(HaortPyramid.total_number_permutations.desc()).limit(10)
+            )
+            res = await session.execute(stmt)
+            return res.scalars().all()
 
         except Exception as err:
             logging.exception(f"Error. {err}")

@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 from PIL import Image, ImageDraw, ImageFont
 
-from src.games.haort_pyramid.haort_query import get_win_game_by_difficulty, update_or_create_haort_game
+from src.games.haort_pyramid.haort_query import get_win_game_by_difficulty_for_user, update_or_create_haort_game
 from src.utils.buttons import HaortPyramidInlineKeyboard as hpik
 from src.utils.delete_image import delete_image_in_system
 
@@ -129,7 +129,7 @@ def get_image(image_path):
 
 
 async def show_image_by_game_difficulty_in_profile_user(callback_query: types.CallbackQuery, game_difficulty: int):
-    requested_game = await get_win_game_by_difficulty(callback_query, game_difficulty)
+    requested_game = await get_win_game_by_difficulty_for_user(callback_query, game_difficulty)
     output_image_path = "static/" + str(callback_query.from_user.id) + "_show_hanoi_towers.png"
 
     state_of_play_data: dict = json.loads(requested_game.best_result)
