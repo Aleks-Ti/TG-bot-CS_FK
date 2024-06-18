@@ -7,7 +7,7 @@ async def parse_records_data(records: list[HaortPyramid]):
     text = ""
     for index, record in enumerate(records):
         text += (
-            f"{index + 1}. {record.game_profile.user.username} - лучший рузультат "
+            f"{index + 1}. {record.game_profile.user.username} - лучший результат "
             f"- {record.total_number_permutations} - всего сыграно игр - {record.total_number_games}\n"
         )
     return text
