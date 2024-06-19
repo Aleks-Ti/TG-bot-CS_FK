@@ -211,7 +211,7 @@ async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContex
 
 
 @dp.message((F.text == mk.HAORT_GAME))
-async def choose_games_difficulty(message: Message, state: FSMContext):
+async def choose_games_difficulty(message: Message):
     keyboard = await inline_buttons_generator([x for x in range(3, 12)])
     text = (
         "Прежде чем начать игру, выберите сложность.\nДля ознакомления, рекомендую сложность 3.\n\nЕсли хотите посложнее, "
