@@ -166,11 +166,12 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
     output_image_path = "static/" + str(callback_query.from_user.id) + "_hanoi_towers.png"
     await text_to_image(output_image_path, TowerStack, state_data["game_difficulty"])
     if await game_condition_check(TowerStack, complete_tower):
-        await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
         win_keyboard = types.InlineKeyboardMarkup(
                 inline_keyboard=[[types.InlineKeyboardButton(text="Ура! Это ПОБЕДА!", callback_data="Ура! Это ПОБЕДА!")]],
             )
-        await callback_query.message.edit_caption(reply_markup=win_keyboard)
+        await callback_query.message.edit_media(
+            types.InputMediaPhoto(media=types.FSInputFile(output_image_path)), reply_markup=win_keyboard,
+        )
         await callback_query.answer(
             text=f"Ура! Это ПОБЕДА!\nКоличество перестановок за игру"
                  f": {state_data["number_of_permutations"]}.\n"
@@ -181,8 +182,9 @@ async def active_haort_game(callback_query: types.CallbackQuery, state: FSMConte
         await state.clear()
         await delete_image_in_system(output_image_path)
     else:
-        await callback_query.message.edit_media(types.InputMediaPhoto(media=types.FSInputFile(output_image_path)))
-        await callback_query.message.edit_caption(reply_markup=keyboard)
+        await callback_query.message.edit_media(
+            types.InputMediaPhoto(media=types.FSInputFile(output_image_path)), reply_markup=keyboard,
+        )
 
 
 async def start_haort_game(callback_query: types.CallbackQuery, state: FSMContext) -> None:
